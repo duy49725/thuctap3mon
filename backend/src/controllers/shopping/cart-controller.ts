@@ -5,7 +5,7 @@ import { DiscountCode } from "@models/discountCode";
 import { Product } from "@models/products";
 import { User } from "@models/users";
 import { Request, Response } from "express";
-import { MoreThan, Repository } from "typeorm";
+import { MoreThanOrEqual, Repository } from "typeorm";
 
 class CartController {
     cartRepositoty: Repository<Cart>;
@@ -21,11 +21,96 @@ class CartController {
         this.cartDetailRepository = AppDataSource.getRepository(CartDetail);
     }
 
+    async getCartUser(req: Request, res: Response): Promise<void>{
+        try {
+            const {userId} = req.params;
+            const userCart = await this.cartRepositoty.findOne({
+                where: {
+                    user: {id: userId}
+                },
+                relations: ['cartDetails', 'cartDetails.product']
+            })
+            if(!userCart){
+                res.status(404).json({
+                    success: false,
+                    data: "User don't have any item in cart"
+                })
+            }
+            if(userCart){
+                userCart.cartDetails = userCart?.cartDetails.filter((detail) => {
+                    if(!detail.product || !detail.product.isActive){
+                        this.cartDetailRepository.remove(detail);
+                        return false;
+                    }
+                    return true;
+                })
+            }
+            const listPrice = userCart && userCart.cartDetails.map(cartDetail => {
+                return {
+                    unitPrice: cartDetail.unitPrice, 
+                    quantity: cartDetail.quantity
+                }
+            });
+            const totalPrice = listPrice && listPrice.reduce((total, value) => total + (value.unitPrice * value.quantity), 0);
+            res.status(200).json({
+                success: true,
+                data: {...userCart, totalPrice},
+            })
+        } catch (error){
+            res.status(500).json({ success: false, message: "Error" });
+        }
+    }
+
+    async applyCouponCode(req: Request, res: Response): Promise<void>{
+        try {
+            const {discountCode_id} = req.body;
+            const {userId} = req.params;
+            const discount = await this.discountRepository.findOne({
+                where: {id: Number(discountCode_id)}
+            })
+            if(!discount){
+                res.status(400).json({
+                    success: false,
+                    data: "Invalid discount code"
+                })
+                return;
+            }
+            const userCart = await this.cartRepositoty.findOne({
+                where: {user: {id: userId}},
+                relations: ['cartDetails', 'cartDetails.product']
+            })
+            if(!userCart){
+                res.status(400).json({
+                    success: false,
+                    data: "Invalid User"
+                })
+                return;
+            }
+            const listPrice = userCart.cartDetails.map(cartDetail => cartDetail.unitPrice);
+            const totalPrice = listPrice.reduce((total, value) => total + value);
+            if(discount.minOrderValue && totalPrice < discount.minOrderValue){
+                res.status(400).json({
+                    success: false,
+                    data: `Your order must be more than ${discount.minOrderValue} to apply this coupon code`
+                })
+                return;
+            }
+            userCart.discount = discount;
+            await this.cartRepositoty.save(userCart);
+            res.status(200).json({
+                success: true,
+                data: 'Apply coupon code successfully'
+            })
+        } catch (error) {
+            res.status(500).json({ success: false, message: "Error" });
+        }
+    }
+
     async addToCart(req: Request, res: Response): Promise<void> {
         try {
             const { product_id, userId, quantity, unitPrice } = req.body;
             const product = await this.productRepository.findOne({
-                where: { id: Number(product_id), isActive: true, quantity: MoreThan(quantity) }
+                where: { id: Number(product_id), isActive: true, quantity: MoreThanOrEqual(quantity) }
             })
             if (!product) {
                 res.status(404).json({
@@ -82,9 +167,9 @@ class CartController {
 
     async updateFormCart(req: Request, res: Response): Promise<void>{
         try {
-            const {cartDetail_Id, quantity} = req.body;
+            const {cartDetail_id, quantity} = req.body;
             const cartDetail = await this.cartDetailRepository.findOne({
-                where: {id: cartDetail_Id}
+                where: {id: cartDetail_id}
             })
             if(!cartDetail){
                 res.status(404).json({

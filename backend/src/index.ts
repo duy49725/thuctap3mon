@@ -9,7 +9,11 @@ import authRoute from '@routes/auth/authRoute';
 import featureRoute from '@routes/common/featureRoute';
 import productShoppingRoute from "@routes/shopping/productRoute";
 import cartShoppingRoute from "@routes/shopping/cartRoute";
+import shippingAddressRoute from "@routes/shopping/shippingAddressRoute";
+import discountCodeRoute from "@routes/admin/discountRoute";
+import usersRoute from "@routes/admin/userRoute";
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 
 dotenv.config();
@@ -32,7 +36,7 @@ app.use(
 );
 
 app.use(express.json());
-
+app.use(cookieParser());
 AppDataSource.initialize().then(() => {
     console.log('database connected');
     app.listen(PORT, () => {
@@ -46,10 +50,14 @@ app.use('/api/admin/fruittype', fruitTypeRoute);
 app.use('/api/admin/category', categoryRoute);
 app.use('/api/admin/promotion', promotionRoute);
 app.use('/api/admin/product', productRoute);
+app.use('/api/admin/discount', discountCodeRoute);
+app.use('/api/admin/user', usersRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/feature', featureRoute);
 app.use('/api/shopping/product', productShoppingRoute);
 app.use('/api/shopping/cart', cartShoppingRoute);
+app.use('/api/shopping/shippingAddress', shippingAddressRoute);
+
 
 
 app.get("/", (req: Request, res: Response) => {

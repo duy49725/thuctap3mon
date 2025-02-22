@@ -2,35 +2,51 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet"
+import { Input } from '@/components/ui/input'; 
 import { shoppingViewHeaderMenuItems } from "@/config";
 import { Apple, LogOut, Menu, ShoppingCart, UserCog2 } from "lucide-react";
-import { useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { checkAuth } from "@/store/auth/auth-slice";
+import { fetchAllCart } from "@/store/shopping/cart-slice";
+import { AspectRatio } from "../ui/aspect-ratio";
+import UserCartWrapper from "./cart-wrapper";
 
 
 const MenuItem = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    return(
+    return (
         <nav className="flex flex-col mb-3 lg:mb-0 lg:flex-row lg:items-center gap-6">
-             {
-                    shoppingViewHeaderMenuItems.map((menuItem) => (
-                        <Label className="text-sm font-medium cursor-pointer" key={menuItem.id}>
-                            {menuItem.label}
-                        </Label>
-                    ))
-                }
+            {
+                shoppingViewHeaderMenuItems.map((menuItem) => (
+                    <Label className="text-sm font-medium cursor-pointer" key={menuItem.id}>
+                        {menuItem.label}
+                    </Label>
+                ))
+            }
         </nav>
     )
 }
 
 const ShoppingHeader = () => {
-    return(
+    return (
         <header className="sticky top-0 z-40 w-full border-b bg-background">
             <div className="flex h-16 items-center justify-between px-4 md:px-16">
                 <Link className="flex items-center gap-2" to={'/'}>
-                    <Apple className="h-6 w-6"/>
+                    <Apple className="h-6 w-6" />
                     <span>Fresh Fruit</span>
                 </Link>
                 <Sheet>
@@ -59,20 +75,46 @@ const ShoppingHeader = () => {
 }
 
 const HeaderRightContent = () => {
-    const [openCartSheet, setOpenCartSheet] = useState(false);
-    return(
+    const [openCartSheet, setOpenCartSheet] = useState<boolean>(false);
+    const { user } = useSelector((state: RootState) => state.adminAuth);
+    const { cartList, isLoading } = useSelector((state: RootState) => state.userCart);
+    const dispatch = useDispatch<AppDispatch>();
+    useEffect(() => {
+       if(user?.userId){
+            dispatch(fetchAllCart(user?.userId))
+       }
+    }, [dispatch, user.userId])
+
+    console.log(cartList, user);
+    return (
         <div className="flex lg:items-center lg:flex-row flex-col gap-4">
-            <Sheet 
-                open={openCartSheet} 
+            <Sheet
+                open={openCartSheet}
                 onOpenChange={() => setOpenCartSheet(false)}
             >
-                <Button 
+                <Button
                     onClick={() => setOpenCartSheet(true)}
                     className="w-32 h-8 flex justify-center items-center relative"
                 >
                     <ShoppingCart className="w-6 h-6 mr-3" />
                     <span>0</span>
                 </Button>
+                <SheetContent className="sheet-custom w-[600px]" side={"right"}>
+                    <SheetHeader>
+                        <SheetTitle className="mx-auto">Shopping Cart</SheetTitle>
+                        <SheetDescription className="mx-auto">
+                            Make changes to your cart here
+                        </SheetDescription>
+                    </SheetHeader>
+                    <div className="grid gap-8 py-4">
+                        <UserCartWrapper totalCartAmount={cartList.totalPrice} setOpenCartSheet={setOpenCartSheet} cartItems={cartList.cartDetails && cartList.cartDetails.length > 0 ? cartList.cartDetails : []}/>
+                    </div>
+                    <SheetFooter>
+                        <SheetClose asChild>
+                            <Button type="submit">Save changes</Button>
+                        </SheetClose>
+                    </SheetFooter>
+                </SheetContent>
             </Sheet>
             <DropdownMenu>
                 <DropdownMenuTrigger>

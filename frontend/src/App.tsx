@@ -11,10 +11,18 @@ import RegisterPage from "./page/auth-view/register-page";
 import LoginPage from "./page/auth-view/login-page";
 import AdminFeature from "./page/admin-view/feature";
 import ShoppingListing from "./page/shopping-view/listing";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "./store/store";
+import { checkAuth } from "./store/auth/auth-slice";
+import { useEffect } from "react";
 
 
 function App() {
-
+  const dispatch = useDispatch<AppDispatch>();
+  const { user } = useSelector((state: RootState) => state.adminAuth);
+  useEffect(() => {
+    dispatch(checkAuth());
+  }, [dispatch])
   return (
     <div className="flex flex-col overflow-hidden bg-white">
       <Routes>

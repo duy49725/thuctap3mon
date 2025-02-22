@@ -6,6 +6,7 @@ import adminProductSlice from './admin/product-slice';
 import adminAuthSlice from './auth/auth-slice';
 import commonFeature from './common/feature-slice';
 import shopProductSlice from './shopping/product-slice';
+import shopCartSlice from './shopping/cart-slice';
 const store = configureStore({
     reducer: {
         adminCategory: adminCategorySlice,
@@ -14,7 +15,8 @@ const store = configureStore({
         adminProduct: adminProductSlice,
         adminAuth: adminAuthSlice,
         commonFeature: commonFeature,
-        shopProduct: shopProductSlice
+        shopProduct: shopProductSlice,
+        userCart: shopCartSlice
     }
 })
 

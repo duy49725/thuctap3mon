@@ -9,10 +9,15 @@ import { AppDispatch, RootState } from '@/store/store';
 import { ArrowUpDownIcon, Search } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useToast } from "@/hooks/use-toast";
+import { addToCart, fetchAllCart } from "@/store/shopping/cart-slice";
 
 const ShoppingListing = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { productList, totalProduct } = useSelector((state: RootState) => state.shopProduct);
+  const { cartList, isLoading } = useSelector((state: RootState) => state.userCart);
+  const { user } = useSelector((state: RootState) => state.adminAuth);
+  const {toast} = useToast();
   const [limit, setLimit] = useState<number>(8);
   const [searchInput, setSearchInput] = useState<string>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -32,7 +37,33 @@ const ShoppingListing = () => {
     const fruitType = searchParams.get("fruitType")?.split(",") || [];
     dispatch(fetchAllShoppingProducts({ page: 1, limit, search, sort, category, fruitType, minPrice, maxPrice }));
   }, [dispatch, limit, search, sort, searchParams]);
-
+  function handleAddToCart(getCurrentProductId: number, getTotalStock: number, unitPrice: number) {
+    let getCartItems = cartList.cartDetails || [];
+    if (getCartItems.length) {
+      const indexOfCurrentItem = getCartItems.findIndex(
+        (item) => item.product.id === getCurrentProductId
+      )
+      if (indexOfCurrentItem > -1) {
+        const getQuantity = getCartItems[indexOfCurrentItem].quantity;
+        if (getQuantity + 1 > getTotalStock) {
+          toast({
+            title: `Only ${getQuantity} quantity can be added for this item`,
+            variant: "destructive"
+          })
+          return;
+        }
+      }
+    }
+    dispatch(addToCart({ userId: user?.userId, product_id: getCurrentProductId, quantity: 1, unitPrice: unitPrice }))
+      .then(data => {
+        if (data?.payload?.success) {
+          dispatch(fetchAllCart(user?.userId));
+          toast({
+            title: "Product is added to cart"
+          })
+        }
+      })
+  }
   return (
     <div className='grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 p-4 md:p-6'>
       <ProductFilter />
@@ -49,12 +80,12 @@ const ShoppingListing = () => {
               }}
             />
             <Search onClick={() => {
-                setSearchParams(prev => {
-                  prev.set("search", String(searchInput));
-                  return prev;
-                });
+              setSearchParams(prev => {
+                prev.set("search", String(searchInput));
+                return prev;
+              });
             }} size={25} className='cursor-pointer hover:text-orange-700' />
-          </div> 
+          </div>
           <div className='flex items-center gap-3'>
             <span className='text-muted-foreground'>{productList.length} product</span>
             <DropdownMenu>
@@ -80,7 +111,7 @@ const ShoppingListing = () => {
         </div>
         <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4'>
           {productList.length > 0
-            ? productList.map((productItem) => <ShoppingProductTile product={productItem} key={productItem.id} />)
+            ? productList.map((productItem) => <ShoppingProductTile product={productItem} key={productItem.id} handleAddToCart={handleAddToCart} />)
             : <p className="text-center">No products found.</p>
           }
         </div>

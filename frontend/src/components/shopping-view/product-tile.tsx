@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter } from "../ui/card";
 import { Badge } from "../ui/badge";
 
 
-const ShoppingProductTile = ({ product }: { product: ProductResponse }) => {
+const ShoppingProductTile = ({ product, handleAddToCart }: { product: ProductResponse, handleAddToCart: (getCurrentProductId: number, getTotalStock: number, unitPrice: number) => void }) => {
     const getBestDiscountedPrice = (product: ProductResponse) => {
         if (!product.promotions || product.promotions.length === 0) {
             return {
@@ -69,15 +69,16 @@ const ShoppingProductTile = ({ product }: { product: ProductResponse }) => {
                         <div className="flex justify-between items-center mb-2">
                             <p>Old Price: <span className={`${product.promotions && product.promotions.length > 0 ? 'line-through' : null } text-sm text-muted-foreground`}>{product.price}</span></p>
                             {
-                                product.promotions && product.promotions.length > 0 && <p>New Price: <span className="text-sm text-muted-foreground">{bestPrice}</span></p>
+                                product.promotions && product.promotions.length > 0 && <p>New Price: <span className="text-sm text-muted-foreground">{bestPrice.toFixed(2)}</span></p>
                             }
-                        <div>{product.finalPrice}</div>
                         </div>
 
                     </CardContent>
                 </div>
                 <CardFooter>
-                    <Button className="w-full mr-2">
+                    <Button 
+                        className="w-full mr-2"
+                    >
                         View Details
                     </Button>
                     {
@@ -85,7 +86,12 @@ const ShoppingProductTile = ({ product }: { product: ProductResponse }) => {
                             ? <Button className="w-full opacity-65 cursor-not-allowed">
                                 Out Of Stock
                             </Button>
-                            : <Button className="w-full bg-red-400">
+                            : <Button
+                                 className="w-full bg-red-400"
+                                 onClick={() => {
+                                    handleAddToCart(product?.id, product?.quantity, bestPrice)
+                                 }}
+                              >
                                 Add to cart
                             </Button>
                     }

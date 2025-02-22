@@ -5,6 +5,7 @@ import axios from "axios";
 interface ShoppingProductState {
     isLoading: boolean,
     productList: ProductResponse[],
+    allProduct: ProductResponse[],
     productDetail: ProductResponse;
     totalProduct: number;
 }
@@ -71,6 +72,7 @@ interface ShoppingProductDetailResponse{
 const initialState: ShoppingProductState = {
     isLoading: false,
     productList: [],
+    allProduct: [],
     productDetail: initializeResponse,
     totalProduct: 0
 }
@@ -101,6 +103,14 @@ export const fetchAllShoppingProducts = createAsyncThunk(
         if (params.limit) query.append("limit", params.limit.toString());
 
         const result = await axios.get(`http://localhost:3000/api/shopping/product/get?${query.toString()}`);
+        return result.data;
+    }
+);
+
+export const fetchAllProducts = createAsyncThunk(
+    "/product/fetchAllProducts",
+    async () => {
+        const result = await axios.get(`http://localhost:3000/api/shopping/product/get`);
         return result.data;
     }
 );
@@ -145,7 +155,18 @@ const shopProductSlice = createSlice({
             })
             .addCase(fetchShoppingProductDetail.rejected, (state) => {
                 state.isLoading = false;
-                state.productDetail = initializeResponse
+                state.allProduct = []
+            })
+            .addCase(fetchAllProducts.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(fetchAllProducts.fulfilled, (state, action: PayloadAction<ShoppingProductResponse>) => {
+                state.isLoading = false;
+                state.allProduct = action.payload.data;
+            })
+            .addCase(fetchAllProducts.rejected, (state) => {
+                state.isLoading = false;
+                state.allProduct = []
             })
     }
 })

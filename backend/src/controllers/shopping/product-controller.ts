@@ -12,7 +12,7 @@ class ProductController {
 
     async getAllProduct(req: Request, res: Response): Promise<void> {
         try {
-            const { search, category, fruitType, minPrice, maxPrice, sort, page = 1, limit = 10 } = req.query;
+            const { search, category, fruitType, minPrice, maxPrice, sort, page = 1, limit = 10000 } = req.query;
             console.log(req.query);
 
             const totalProduct = await this.productRepository.count();

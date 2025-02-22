@@ -1,7 +1,6 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Cart } from "./carts";
 
-
 @Entity('discountCodes')
 export class DiscountCode {
     @PrimaryGeneratedColumn()

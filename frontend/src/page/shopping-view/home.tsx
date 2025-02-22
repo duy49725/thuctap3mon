@@ -8,6 +8,9 @@ import { AppDispatch, RootState } from '@/store/store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import ShoppingProductTile from '@/components/shopping-view/product-tile';
+import { checkAuth } from '@/store/auth/auth-slice';
+import { addToCart, fetchAllCart } from '@/store/shopping/cart-slice';
+import { useToast } from '@/hooks/use-toast';
 
 const fruitTypeWithIcon = [
   { id: "citrus", label: "Citrus", icon: Citrus },
@@ -23,20 +26,49 @@ const Home = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { productList, totalProduct } = useSelector((state: RootState) => state.shopProduct);
   const { featureImageList } = useSelector((state: RootState) => state.commonFeature);
+  const { cartList, isLoading } = useSelector((state: RootState) => state.userCart);
+  const { user } = useSelector((state: RootState) => state.adminAuth);
   const [limit, setLimit] = useState<number>(8);
+  const {toast} = useToast();
   useEffect(() => {
     dispatch(fetchAllShoppingProducts({ page: 1, limit: limit }))
   }, [limit, dispatch])
   useEffect(() => {
     dispatch(fetchAllFeatureImage());
   }, [dispatch])
-
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prevSlide) => (prevSlide + 1) % featureImageList.length);
     }, 5000)
     return () => clearInterval(timer);
   })
+  function handleAddToCart(getCurrentProductId: number, getTotalStock: number, unitPrice: number){
+    let getCartItems = cartList.cartDetails || [];
+    if(getCartItems.length){
+      const indexOfCurrentItem = getCartItems.findIndex(
+        (item) => item.product.id === getCurrentProductId
+      )
+      if(indexOfCurrentItem > -1){
+        const getQuantity = getCartItems[indexOfCurrentItem].quantity;
+        if(getQuantity + 1 > getTotalStock){
+          toast({
+            title: `Only ${getQuantity} quantity can be added for this item`,
+            variant: "destructive"
+          })
+          return;
+        }
+      }
+    }
+    dispatch(addToCart({userId: user?.userId, product_id: getCurrentProductId, quantity: 1, unitPrice: unitPrice}))
+      .then(data => {
+          if(data?.payload?.success){
+            dispatch(fetchAllCart(user?.userId));
+            toast({
+              title: "Product is added to cart"
+            })
+          }
+      })
+  }
   console.log(totalProduct);
   return (
     <div className='flex flex-col min-h-screen'>
@@ -88,7 +120,7 @@ const Home = () => {
             {
               productList && productList.length > 0
                 ? productList.map((productItem) => (
-                  <ShoppingProductTile product={productItem} />
+                  <ShoppingProductTile product={productItem} handleAddToCart={handleAddToCart}/>
                 ))
                 : null
             }
