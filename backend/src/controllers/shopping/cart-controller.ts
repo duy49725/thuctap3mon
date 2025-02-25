@@ -21,54 +21,61 @@ class CartController {
         this.cartDetailRepository = AppDataSource.getRepository(CartDetail);
     }
 
-    async getCartUser(req: Request, res: Response): Promise<void>{
+    async getCartUser(req: Request, res: Response): Promise<void> {
         try {
-            const {userId} = req.params;
+            const { userId } = req.params;
             const userCart = await this.cartRepositoty.findOne({
                 where: {
-                    user: {id: userId}
+                    user: { id: userId },
                 },
-                relations: ['cartDetails', 'cartDetails.product']
-            })
-            if(!userCart){
+                relations: ['cartDetails', 'cartDetails.product'],
+            });
+
+            if (!userCart) {
                 res.status(404).json({
                     success: false,
-                    data: "User don't have any item in cart"
-                })
+                    data: "User don't have any item in cart",
+                });
+                return
             }
-            if(userCart){
-                userCart.cartDetails = userCart?.cartDetails.filter((detail) => {
-                    if(!detail.product || !detail.product.isActive){
-                        this.cartDetailRepository.remove(detail);
-                        return false;
-                    }
-                    return true;
-                })
-            }
-            const listPrice = userCart && userCart.cartDetails.map(cartDetail => {
-                return {
-                    unitPrice: cartDetail.unitPrice, 
-                    quantity: cartDetail.quantity
+
+            // Xử lý bất đồng bộ để xóa các cartDetail không hợp lệ
+            const validCartDetails = [];
+            for (const detail of userCart.cartDetails) {
+                if (!detail.product || !detail.product.isActive) {
+                    await this.cartDetailRepository.remove(detail); // Await để đảm bảo xóa xong
+                } else {
+                    validCartDetails.push(detail);
                 }
-            });
-            const totalPrice = listPrice && listPrice.reduce((total, value) => total + (value.unitPrice * value.quantity), 0);
+            }
+            userCart.cartDetails = validCartDetails;
+
+            // Tính tổng giá
+            const listPrice = userCart.cartDetails.map(cartDetail => ({
+                unitPrice: cartDetail.unitPrice,
+                quantity: cartDetail.quantity,
+            }));
+            const totalPrice = listPrice.reduce((total, value) => total + value.unitPrice * value.quantity, 0);
+
             res.status(200).json({
                 success: true,
-                data: {...userCart, totalPrice},
-            })
-        } catch (error){
+                data: { ...userCart, totalPrice },
+            });
+            return
+        } catch (error) {
+            console.error(error);
             res.status(500).json({ success: false, message: "Error" });
         }
     }
 
-    async applyCouponCode(req: Request, res: Response): Promise<void>{
+    async applyCouponCode(req: Request, res: Response): Promise<void> {
         try {
-            const {discountCode_id} = req.body;
-            const {userId} = req.params;
+            const { discountCode_id } = req.body;
+            const { userId } = req.params;
             const discount = await this.discountRepository.findOne({
-                where: {id: Number(discountCode_id)}
+                where: { id: Number(discountCode_id) }
             })
-            if(!discount){
+            if (!discount) {
                 res.status(400).json({
                     success: false,
                     data: "Invalid discount code"
@@ -76,10 +83,10 @@ class CartController {
                 return;
             }
             const userCart = await this.cartRepositoty.findOne({
-                where: {user: {id: userId}},
+                where: { user: { id: userId } },
                 relations: ['cartDetails', 'cartDetails.product']
             })
-            if(!userCart){
+            if (!userCart) {
                 res.status(400).json({
                     success: false,
                     data: "Invalid User"
@@ -88,7 +95,7 @@ class CartController {
             }
             const listPrice = userCart.cartDetails.map(cartDetail => cartDetail.unitPrice);
             const totalPrice = listPrice.reduce((total, value) => total + value);
-            if(discount.minOrderValue && totalPrice < discount.minOrderValue){
+            if (discount.minOrderValue && totalPrice < discount.minOrderValue) {
                 res.status(400).json({
                     success: false,
                     data: `Your order must be more than ${discount.minOrderValue} to apply this coupon code`
@@ -130,10 +137,10 @@ class CartController {
                 return;
             }
             let CurrentCart = await this.cartRepositoty.findOne({
-                where: { user: {id: CurrentUser.id}},
+                where: { user: { id: CurrentUser.id } },
                 relations: ['cartDetails']
             })
-            if(!CurrentCart){
+            if (!CurrentCart) {
                 CurrentCart = this.cartRepositoty.create({
                     user: CurrentUser,
                     cartDetails: []
@@ -141,11 +148,11 @@ class CartController {
                 await this.cartRepositoty.save(CurrentCart);
             }
             let cartDtail = await this.cartDetailRepository.findOne({
-                where: {cart: {id: CurrentCart.id}, product: {id: product_id}}
+                where: { cart: { id: CurrentCart.id }, product: { id: product_id } }
             })
-            if(cartDtail){
+            if (cartDtail) {
                 cartDtail.quantity += quantity;
-            }else{
+            } else {
                 cartDtail = this.cartDetailRepository.create({
                     cart: CurrentCart,
                     product: product,
@@ -154,7 +161,7 @@ class CartController {
                 })
             }
             await this.cartDetailRepository.save(cartDtail);
-           
+
             res.status(200).json({
                 success: true,
                 data: "Add To Cart Successfully"
@@ -165,13 +172,13 @@ class CartController {
         }
     }
 
-    async updateFormCart(req: Request, res: Response): Promise<void>{
+    async updateFormCart(req: Request, res: Response): Promise<void> {
         try {
-            const {cartDetail_id, quantity} = req.body;
+            const { cartDetail_id, quantity } = req.body;
             const cartDetail = await this.cartDetailRepository.findOne({
-                where: {id: cartDetail_id}
+                where: { id: cartDetail_id }
             })
-            if(!cartDetail){
+            if (!cartDetail) {
                 res.status(404).json({
                     success: false,
                     data: "Invalid cart Item"
@@ -189,13 +196,13 @@ class CartController {
         }
     }
 
-    async removeFromCart(req: Request, res: Response): Promise<void>{
+    async removeFromCart(req: Request, res: Response): Promise<void> {
         try {
-            const {cartDetail_Id} = req.params;
+            const { cartDetail_Id } = req.params;
             const cartDetail = await this.cartDetailRepository.findOne({
-                where: {id: Number(cartDetail_Id)}
+                where: { id: Number(cartDetail_Id) }
             })
-            if(!cartDetail){
+            if (!cartDetail) {
                 res.status(404).json({
                     success: false,
                     data: "Invalid cart Item"

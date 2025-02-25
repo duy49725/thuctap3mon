@@ -21,7 +21,8 @@ class UserController{
             const skip = (page - 1) * limit;
             const [users, totalUsers] = await this.userRepository.findAndCount({
                 skip,
-                take: limit
+                take: limit,
+                relations: ['roles']
             });
             if(!users.length){
                 res.status(404).json({
@@ -107,8 +108,8 @@ class UserController{
             user.password = hashPassword || user.password;
             user.fullName = fullName || user.fullName;
             user.avatar = avatar || user.avatar;
-            user.isVerified = isVerified || user.isVerified;
-            user.isActive = isActive || user.isActive;
+            user.isVerified = isVerified;
+            user.isActive = isActive;
             await this.userRepository.save(user);
             res.status(200).json({
                 success: true,

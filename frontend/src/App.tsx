@@ -15,6 +15,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "./store/store";
 import { checkAuth } from "./store/auth/auth-slice";
 import { useEffect } from "react";
+import AdminDiscountCodePage from "./page/admin-view/discountCode";
+import AdminRolePage from "./page/admin-view/roles";
+import AdminUserPage from "./page/admin-view/user";
+import ShoppingAccount from "./page/shopping-view/account";
+import ShoppingCheckout from "./page/shopping-view/checkout";
+import PaypalReturnPage from "./page/shopping-view/payment-return";
+import PaymentSuccess from "./page/shopping-view/payment-success";
 
 
 function App() {
@@ -35,10 +42,17 @@ function App() {
           <Route path="promotion" element={<AdminPromotionPage />} />
           <Route path="product" element={<AdminProductPage />} />
           <Route path="feature" element={<AdminFeature />} />
+          <Route path="discount" element={<AdminDiscountCodePage />} />
+          <Route path="role" element={<AdminRolePage />} />
+          <Route path="user" element={<AdminUserPage />} />
         </Route>
         <Route path="/shopping" element={<ShoppintLayout />}>
           <Route path="home" element={<Home />} />
           <Route path="list" element={<ShoppingListing />} />
+          <Route path="account" element={<ShoppingAccount />} />
+          <Route path="checkout" element={<ShoppingCheckout />} />
+          <Route path="paypal-return" element={<PaypalReturnPage />} />
+          <Route path="payment-success" element={<PaymentSuccess />} />
         </Route>
         <Route path="/auth/register" element={<RegisterPage />} />
         <Route path="/auth/login" element={<LoginPage />} />

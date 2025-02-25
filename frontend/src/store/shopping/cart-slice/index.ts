@@ -41,7 +41,7 @@ interface cartForm {
 }
 
 export const fetchAllCart = createAsyncThunk("/cart/getAllCart", async (id: string) => {
-    const result = await axios.get(`http://localhost:3000/api/shopping/cart/get/${id}`,);
+    const result = await axios.get(`http://localhost:3000/api/shopping/cart/get/${id}`);
     return result.data;
 })
 

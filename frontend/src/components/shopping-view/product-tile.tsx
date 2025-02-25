@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter } from "../ui/card";
 import { Badge } from "../ui/badge";
 
 
-const ShoppingProductTile = ({ product, handleAddToCart }: { product: ProductResponse, handleAddToCart: (getCurrentProductId: number, getTotalStock: number, unitPrice: number) => void }) => {
+const ShoppingProductTile = ({ handleGetProductDetails, product, handleAddToCart }: { handleGetProductDetails: (id: number) => void, product: ProductResponse, handleAddToCart: (getCurrentProductId: number, getTotalStock: number, unitPrice: number) => void }) => {
     const getBestDiscountedPrice = (product: ProductResponse) => {
         if (!product.promotions || product.promotions.length === 0) {
             return {
@@ -41,7 +41,7 @@ const ShoppingProductTile = ({ product, handleAddToCart }: { product: ProductRes
     return (
         <div>
             <Card className="w-full max-w-sm mx-auto flex flex-col justify-between">
-                <div className="flex flex-col">
+                <div className="flex flex-col" onClick={() => handleGetProductDetails(product?.id)}>
                     <div className="relative">
                         <img src={product.image} alt={product.name} className="w-full h-[300px] object-cover rounded-t-lg" />
                         {

@@ -21,8 +21,8 @@ const UserCartWrapper = ({ cartItems, setOpenCartSheet, totalCartAmount }: UserC
             <div className='mt-8 space-y-4'>
                 {
                     cartItems && cartItems.length > 0
-                    ? cartItems.map(item => <UserCartItemsContent cartItem={item}/>)
-                    : null
+                        ? cartItems.map(item => <UserCartItemsContent cartItem={item} />)
+                        : null
                 }
             </div>
             <div className='mt-8 space-y-4'>
@@ -32,6 +32,10 @@ const UserCartWrapper = ({ cartItems, setOpenCartSheet, totalCartAmount }: UserC
                 </div>
             </div>
             <Button
+                onClick={() => {
+                    navigate('/shopping/checkout')
+                    setOpenCartSheet(false)
+                }}
                 className='w-full mt-6'
             >
                 Checkout

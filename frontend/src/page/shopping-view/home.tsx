@@ -11,6 +11,7 @@ import ShoppingProductTile from '@/components/shopping-view/product-tile';
 import { checkAuth } from '@/store/auth/auth-slice';
 import { addToCart, fetchAllCart } from '@/store/shopping/cart-slice';
 import { useToast } from '@/hooks/use-toast';
+import ProductDetailsDialog from '@/components/shopping-view/product-detail';
 
 const fruitTypeWithIcon = [
   { id: "citrus", label: "Citrus", icon: Citrus },
@@ -24,7 +25,7 @@ const Home = () => {
   const [currentSlide, setCurrentSlide] = useState<number>(0);
   const [openDetailsDialog, setOpenDetailsDialog] = useState<boolean>(false);
   const dispatch = useDispatch<AppDispatch>();
-  const { productList, totalProduct } = useSelector((state: RootState) => state.shopProduct);
+  const { productList, totalProduct, productDetail } = useSelector((state: RootState) => state.shopProduct);
   const { featureImageList } = useSelector((state: RootState) => state.commonFeature);
   const { cartList, isLoading } = useSelector((state: RootState) => state.userCart);
   const { user } = useSelector((state: RootState) => state.adminAuth);
@@ -42,6 +43,12 @@ const Home = () => {
     }, 5000)
     return () => clearInterval(timer);
   })
+  useEffect(() => {
+    if(productDetail !== null) setOpenDetailsDialog(true);
+  }, [productDetail])
+  function handleGetProductDetails(getCurrentProductId: number){
+    dispatch(fetchShoppingProductDetail(getCurrentProductId));
+  }
   function handleAddToCart(getCurrentProductId: number, getTotalStock: number, unitPrice: number){
     let getCartItems = cartList.cartDetails || [];
     if(getCartItems.length){
@@ -69,7 +76,11 @@ const Home = () => {
           }
       })
   }
-  console.log(totalProduct);
+  useEffect(() => {
+    if(!productDetail){
+      setOpenDetailsDialog(false);
+    }
+  }, [productDetail])
   return (
     <div className='flex flex-col min-h-screen'>
       <div className='relative w-full h-[600px] overflow-hidden'>
@@ -120,7 +131,7 @@ const Home = () => {
             {
               productList && productList.length > 0
                 ? productList.map((productItem) => (
-                  <ShoppingProductTile product={productItem} handleAddToCart={handleAddToCart}/>
+                  <ShoppingProductTile handleGetProductDetails={handleGetProductDetails} product={productItem} handleAddToCart={handleAddToCart}/>
                 ))
                 : null
             }
@@ -137,6 +148,7 @@ const Home = () => {
           )}
         </div>
       </section>
+      <ProductDetailsDialog open={openDetailsDialog} setOpen={setOpenDetailsDialog} productDetails={productDetail} />
     </div>
   )
 }

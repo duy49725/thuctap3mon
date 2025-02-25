@@ -72,7 +72,7 @@ const UpdatePromotionForm = ({promotion, onSave}: EditPromotionFormProps) => {
 
              <Input 
                 type="date"
-                value={promotionForm.startDate.toISOString().split("T")[0]}
+                value={new Date(promotionForm.startDate).toISOString().split("T")[0]}
                 onChange={(e) => setPromotionForm({...promotionForm, startDate: new Date(e.target.value)})}
                 placeholder="Promotion Start Date"
                 className="mb-4"
@@ -80,7 +80,7 @@ const UpdatePromotionForm = ({promotion, onSave}: EditPromotionFormProps) => {
 
              <Input 
                 type="date"
-                value={promotionForm.endDate.toISOString().split("T")[0]}
+                value={new Date(promotionForm.endDate).toISOString().split("T")[0]}
                 onChange={(e) => setPromotionForm({...promotionForm, endDate: new Date(e.target.value)})}
                 placeholder="Promotion End Date"
                 className="mb-4"

@@ -31,6 +31,12 @@ export class ShippingAddress {
     @Column({ default: false })
     is_default!: boolean;
 
+    @Column()
+    phoneNumber!: number;
+
+    @Column()
+    note!: string;
+
     @CreateDateColumn({ type: 'timestamp' })
     createdAt!: Date;
 

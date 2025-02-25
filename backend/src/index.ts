@@ -12,6 +12,8 @@ import cartShoppingRoute from "@routes/shopping/cartRoute";
 import shippingAddressRoute from "@routes/shopping/shippingAddressRoute";
 import discountCodeRoute from "@routes/admin/discountRoute";
 import usersRoute from "@routes/admin/userRoute";
+import rolesRoute from "@routes/admin/roleRoute";
+import orderRoute from "@routes/shopping/orderRoute";
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
@@ -52,13 +54,13 @@ app.use('/api/admin/promotion', promotionRoute);
 app.use('/api/admin/product', productRoute);
 app.use('/api/admin/discount', discountCodeRoute);
 app.use('/api/admin/user', usersRoute);
+app.use('/api/admin/role', rolesRoute);
 app.use('/api/auth', authRoute);
 app.use('/api/feature', featureRoute);
 app.use('/api/shopping/product', productShoppingRoute);
 app.use('/api/shopping/cart', cartShoppingRoute);
 app.use('/api/shopping/shippingAddress', shippingAddressRoute);
-
-
+app.use('/api/shopping/order', orderRoute);
 
 app.get("/", (req: Request, res: Response) => {
     res.send("Hello World");

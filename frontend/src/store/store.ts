@@ -4,9 +4,15 @@ import adminFruitTypeSlice from './admin/fruitType-slice';
 import adminPromotionSlice from './admin/promotion-slice';
 import adminProductSlice from './admin/product-slice';
 import adminAuthSlice from './auth/auth-slice';
+import adminDiscountSlice from './admin/discount-slice';
+import adminRoleSlice from './admin/role-slice';
+import adminUserSlice from './admin/user-slice';
 import commonFeature from './common/feature-slice';
 import shopProductSlice from './shopping/product-slice';
 import shopCartSlice from './shopping/cart-slice';
+import shopShippingAddressSlice from './shopping/address-slice';
+import shoppingOrderSlice from './shopping/order-slice';
+
 const store = configureStore({
     reducer: {
         adminCategory: adminCategorySlice,
@@ -14,9 +20,14 @@ const store = configureStore({
         adminPromotion: adminPromotionSlice,
         adminProduct: adminProductSlice,
         adminAuth: adminAuthSlice,
+        adminDiscount: adminDiscountSlice,
+        adminRole: adminRoleSlice,
+        adminUser: adminUserSlice,
         commonFeature: commonFeature,
         shopProduct: shopProductSlice,
-        userCart: shopCartSlice
+        shoppAddress: shopShippingAddressSlice,
+        shopOrder: shoppingOrderSlice,
+        userCart: shopCartSlice,
     }
 })
 

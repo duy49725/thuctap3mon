@@ -172,7 +172,7 @@ class ProductController{
             product.price = price || product.price;
             product.quantity = quantity || product.quantity;
             product.unit = unit || product.unit;
-            product.isActive = isActive || product.isActive;
+            product.isActive = isActive;
             await this.productRepository.save(product);
             res.status(200).json({
                 success: true,

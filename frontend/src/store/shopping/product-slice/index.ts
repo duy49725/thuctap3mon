@@ -6,7 +6,7 @@ interface ShoppingProductState {
     isLoading: boolean,
     productList: ProductResponse[],
     allProduct: ProductResponse[],
-    productDetail: ProductResponse;
+    productDetail: ProductResponse | null;
     totalProduct: number;
 }
 
@@ -73,7 +73,7 @@ const initialState: ShoppingProductState = {
     isLoading: false,
     productList: [],
     allProduct: [],
-    productDetail: initializeResponse,
+    productDetail: null,
     totalProduct: 0
 }
 
@@ -118,7 +118,7 @@ export const fetchAllProducts = createAsyncThunk(
 
 export const fetchShoppingProductDetail = createAsyncThunk(
     "/product/shoppingProductDetail",
-    async (id) => {
+    async (id: number) => {
         const result = await axios.get(`http://localhost:3000/api/shopping/product/getDetail/${id}`);
         return result.data;
     }
@@ -129,7 +129,7 @@ const shopProductSlice = createSlice({
     initialState,
     reducers: {
         setProductDetails: (state) => {
-            state.productDetail = initializeResponse
+            state.productDetail = null
         }
     },
     extraReducers: (builder) => {

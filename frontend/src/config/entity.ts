@@ -56,7 +56,7 @@ export interface ProductResponse {
 }
 
 export interface Role {
-    id: string,
+    id: number,
     roleName: string;
 }
 
@@ -83,4 +83,79 @@ export interface FeatureImage {
 export interface FeatureImageResponse {
     success: boolean;
     data: FeatureImage[];
+}
+
+export interface DiscountCode {
+    id: number;
+    code: string;
+    amount: number;
+    type: string;
+    minOrderValue: number;
+    maxUser: number;
+    usedCount: number;
+    startDate: Date;
+    endDate: Date;
+    isActive: boolean;
+}
+
+export interface UserToManage{
+    id: string;
+    email: string;
+    password: string;
+    fullName: string;
+    avatar: string;
+    isVerified: boolean;
+    isActive: boolean;
+    roles_Id: number[];
+}
+
+export interface UserToManageResponse{
+    id: string;
+    email: string;
+    password: string;
+    fullName: string;
+    avatar: string;
+    isVerified: boolean;
+    isActive: boolean;
+    roles: Role[];
+}
+
+export interface ShippingAddress{
+    id: number;
+    user_id: string;
+    fullName: string;
+    streetAddress: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+    is_default: boolean;
+    phoneNumber: number;
+    note: string;
+}
+
+export interface Order{
+    id: number;
+    userId: string;
+    cartId: number;
+    discountCodeId: number;
+    subTotal: number;
+    discountAmount: number;
+    totalAmount: number;
+    status: string;
+    shippingAddressId: number | undefined;
+    paymentMethod: string;
+    orderDate: Date;
+    orderUpdateDate: Date;
+    paymentStatus: string;
+    paymentId: string;
+    payerId: string;
+}
+
+export interface OrderDetail{
+    id: number;
+    order_id: number;
+    product_id: number;
+    quantity: number;
+    unitPrice: number;
 }

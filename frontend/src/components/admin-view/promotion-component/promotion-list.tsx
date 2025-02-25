@@ -45,8 +45,8 @@ const PromotionList = ({promotions, onEdit, onDelete}: PromotionListProps) => {
                                 <TableCell>{promotion.description}</TableCell>
                                 <TableCell>{promotion.discountAmount}</TableCell>
                                 <TableCell>{promotion.discountType}</TableCell>
-                                <TableCell>{promotion.startDate.toLocaleString()}</TableCell>
-                                <TableCell>{promotion.endDate.toLocaleString()}</TableCell>
+                                <TableCell>{new Date(promotion.startDate).toISOString().split('T')[0]}</TableCell>
+                                <TableCell>{new Date(promotion.endDate).toISOString().split('T')[0]}</TableCell>
                                 <TableCell>
                                     <Checkbox checked={Boolean(promotion.isActive)} />
                                 </TableCell>
