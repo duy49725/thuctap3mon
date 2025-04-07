@@ -114,6 +114,7 @@ const UpdateDiscountCodeForm = ({ discount, onSave }: UpdateDiscountFormProps) =
             <div className="mb-4 flex item-center space-x-2">
                 <Checkbox
                     id="term2"
+                    checked={discountForm.isActive}
                     onCheckedChange={(checked) => setDiscountForm({ ...discountForm, isActive: Boolean(checked) })}
                 />
                 <label

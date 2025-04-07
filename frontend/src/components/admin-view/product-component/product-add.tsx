@@ -13,9 +13,10 @@ import MultiSelect from 'react-select';
 import { Label } from "@/components/ui/label";
 import { fetchAllCategory } from "@/store/admin/category-slice";
 import ImageUpload from "../image-upload";
+import MultipleImageUpload from '@/common/uploadMultiIImage';
 
 interface AddProductFormProps {
-    onAdd: (product: Omit<Product, 'id'>) => void;
+    onAdd: (data: { product: Omit<Product, 'id'>; images: string[] }) => void;
 }
 
 export const productInitial: Omit<Product, 'id'> = {
@@ -28,7 +29,8 @@ export const productInitial: Omit<Product, 'id'> = {
     image: '',
     isActive: false,
     category_id: [],
-    promotion_id: []
+    promotion_id: [],
+    productImages: []
 }
 
 const AddProductForm = ({ onAdd }: AddProductFormProps) => {
@@ -44,6 +46,7 @@ const AddProductForm = ({ onAdd }: AddProductFormProps) => {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string>('');
     const [imageLoadingState, setImageLoadingState] = useState<boolean>(false);
+    const [images, setImages] = useState<{imageUrl: string}[]>([]);
     useEffect(() => {
         dispatch(fetchAllFruitType({ page: 1, limit: totalFruitTypes }))
         dispatch(fetchAllPromotion({ page: 1, limit: totalPromotions }))
@@ -69,25 +72,25 @@ const AddProductForm = ({ onAdd }: AddProductFormProps) => {
     }, [categoryList])
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-       /* const formData: any = new FormData();
-        formData.append('name', product.name);
-        formData.append('description', product.description);
-        formData.append('price', String(product.price));
-        formData.append('quantity', String(product.quantity));
-        formData.append('unit', product.unit);
-        formData.append('isActive', product.isActive ? '1' : '0'); 
-        formData.append('fruitType_id', String(product.fruitType_id));
-        product.category_id.forEach(categoryId => formData.append('category_id[]', String(categoryId)));
-        product.promotion_id.forEach(promotionId => formData.append('promotion_id[]', String(promotionId)));
-        if (product.image) {
-            formData.append('image', uploadedImageUrl);
-        }*/
-        onAdd({...product, image: uploadedImageUrl});
+        const updatedProduct = { ...product, image: uploadedImageUrl };
+        const imageUrls = images.map((img) => img.imageUrl);
+        onAdd({ product: updatedProduct, images: imageUrls });
         setProduct(productInitial);
+        setSelectedPromotions([]);
+        setSelectedCategories([]);
+        setUploadedImageUrl('');
+        setImages([]);
+        setImageFile(null);
+    };
+    const handleImageUpload = (newImages: {imageUrl: string;}[]) => {
+        setImages([...images, ...newImages]);
     }
-    
+    const removeImage = (index: number) => {
+        setImages(images.filter((_, i) => i !== index));
+    }
+    console.log(images);
     return (
-        <form className="w-[500px]" onSubmit={handleSubmit} encType="multipart/form-data">
+        <form className="w-[700px]" onSubmit={handleSubmit} encType="multipart/form-data">
             <Label>Product Name</Label>
             <Input
                 type="text"
@@ -103,99 +106,148 @@ const AddProductForm = ({ onAdd }: AddProductFormProps) => {
                 placeholder="Enter Product Description"
                 className="mb-4"
             />
-            <Label>Product Price</Label>
-            <Input
-                type="number"
-                value={product.price}
-                onChange={(e) => setProduct({ ...product, price: Number(e.target.value) })}
-                className="mb-4"
-            />
-            <Label>Product Quantity</Label>
-            <Input
-                type="number"
-                value={product.quantity}
-                onChange={(e) => setProduct({ ...product, quantity: Number(e.target.value) })}
-                className="mb-4"
-            />
-            <Label>Product Unit</Label>
-            <Input
-                type="text"
-                value={product.unit}
-                onChange={(e) => setProduct({ ...product, unit: e.target.value })}
-                placeholder="Enter Product Unit"
-                className="mb-4"
-            />
-            <Label>Choose Product Image</Label>
-            {/*<Input
-                type="file"
-                onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                        setProduct({ ...product, image: e.target.files[0] });
-                    }
-                }}
-                className="mb-4"
-            />*/}
-            <ImageUpload 
-                imageFile={imageFile}
-                setImageFile={setImageFile}
-                setUploadedImageUrl={setUploadedImageUrl}
-                imageLoadingState={imageLoadingState}
-                setImageLoadingState={setImageLoadingState}
-            />
-            <div className="flex items-center space-x-2 mb-4">
+            <div className="flex justify-between gap-2 items-center">
+                <div>
+                    <Label>Product Price</Label>
+                    <Input
+                        type="number"
+                        value={product.price}
+                        onChange={(e) => setProduct({ ...product, price: Number(e.target.value) })}
+                        className="mb-4"
+                    />
+                </div>
+                <div>
+                    <Label>Product Quantity</Label>
+                    <Input
+                        type="number"
+                        value={product.quantity}
+                        onChange={(e) => setProduct({ ...product, quantity: Number(e.target.value) })}
+                        className="mb-4"
+                    />
+                </div>
+            </div>
+            <div className="flex justify-between items-center mb-6">
+                <div className="w-[200px] h-[50px]">
+                    <Label>Product Unit</Label>
+                    <Select
+                        onValueChange={(value) => setProduct({ ...product, unit: value })}
+                        value={product.unit}
+                    >
+                        <SelectTrigger className="w-full, mb-4">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="kg">
+                                Kg
+                            </SelectItem>
+                            <SelectItem value="piece">
+                                Piece
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="w-[200px] h-[50px]">
+                    <Label>Select Fruit Type</Label>
+                    <Select
+                        onValueChange={(value) => setProduct({ ...product, fruitType_id: Number(value) })}
+                        value={String(product.fruitType_id)}
+                    >
+                        <SelectTrigger className="w-full, mb-4">
+                            <SelectValue placeholder={fruitTypeList.map((fruitType) => fruitType.id == product.fruitType_id ? fruitType.name : null)} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {
+                                fruitTypeList && fruitTypeList.length > 0
+                                    ? fruitTypeList.map((fruitType) => (
+                                        <SelectItem key={fruitType.id} value={String(fruitType.id)}>
+                                            {fruitType.name}
+                                        </SelectItem>
+                                    )) : null
+                            }
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+            <div className={`flex items-center justify-between ${uploadedImageUrl ? 'gap-5' : ''}`}>
+                <ImageUpload
+                    imageFile={imageFile}
+                    setImageFile={setImageFile}
+                    setUploadedImageUrl={setUploadedImageUrl}
+                    imageLoadingState={imageLoadingState}
+                    setImageLoadingState={setImageLoadingState}
+                />
+                {
+                    uploadedImageUrl && <img  className="w-24 h-24 mt-6" src={uploadedImageUrl} alt="" />
+                }
+            </div>
+            <div className="space-y-2">
+                <Label>Add Orther Photos (optional)</Label>
+                <MultipleImageUpload 
+                    onImageUpload={handleImageUpload}
+                    maxImages={5}
+                />
+                {
+                    images.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {
+                                images.map((image, index) => (
+                                    <div key={index} className="relative group">
+                                        <img className="w-24 h-24 mt-6" src={image.imageUrl} alt="" />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeImage(index)}
+                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+                                        >
+                                            &times;
+                                        </button>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    )
+                }
+            </div>
+            <div className="flex items-center space-x-2 mt-4 mb-2">
                 <Checkbox id="terms2" onCheckedChange={(checked) => setProduct({ ...product, isActive: Boolean(checked) })} />
                 <label
                     htmlFor="terms2"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                    Promotion Active
+                    Is Active
                 </label>
             </div>
-            <Label>Select Fruit Type</Label>
-            <Select
-                onValueChange={(value) => setProduct({ ...product, fruitType_id: Number(value) })}
-                value={String(product.fruitType_id)}
-            >
-                <SelectTrigger className="w-full, mb-4">
-                    <SelectValue placeholder={fruitTypeList.map((fruitType) => fruitType.id == product.fruitType_id ? fruitType.name : null)} />
-                </SelectTrigger>
-                <SelectContent>
-                    {
-                        fruitTypeList && fruitTypeList.length > 0
-                            ? fruitTypeList.map((fruitType) => (
-                                <SelectItem key={fruitType.id} value={String(fruitType.id)}>
-                                    {fruitType.name}
-                                </SelectItem>
-                            )) : null
-                    }
-                </SelectContent>
-            </Select>
-            <Label>Select Promotion Program</Label>
-            <MultiSelect
-                isMulti
-                value={selectedPromotions}
-                options={promotionOptions}
-                onChange={(selectedOptions) => {
-                    setSelectedPromotions([...selectedOptions])
-                    setProduct({ ...product, promotion_id: selectedOptions.map(promotion => promotion.value) })
-                }}
-                styles={{
-                    container: (provided) => ({ ...provided, width: '100%', marginBottom: '1rem' }),
-                }}
-            />
-            <Label>Select Category</Label>
-            <MultiSelect
-                isMulti
-                value={selectedCategories}
-                options={categoriesOptions}
-                onChange={(selectedOptions) => {
-                    setSelectedCategories([...selectedOptions])
-                    setProduct({ ...product, category_id: selectedOptions.map(category => category.value) })
-                }}
-                styles={{
-                    container: (provided) => ({ ...provided, width: '100%', marginBottom: '1rem' }),
-                }}
-            />
+            <div className="flex justify-between items-center gap-10">
+                <div className="w-[50%]">
+                    <Label>Select Promotion Program</Label>
+                    <MultiSelect
+                        isMulti
+                        value={selectedPromotions}
+                        options={promotionOptions}
+                        onChange={(selectedOptions) => {
+                            setSelectedPromotions([...selectedOptions])
+                            setProduct({ ...product, promotion_id: selectedOptions.map(promotion => promotion.value) })
+                        }}
+                        styles={{
+                            container: (provided) => ({ ...provided, width: '100%', marginBottom: '1rem' }),
+                        }}
+                    />
+                </div>
+                <div className="w-[50%]">
+                    <Label>Select Category</Label>
+                    <MultiSelect
+                        isMulti
+                        value={selectedCategories}
+                        options={categoriesOptions}
+                        onChange={(selectedOptions) => {
+                            setSelectedCategories([...selectedOptions])
+                            setProduct({ ...product, category_id: selectedOptions.map(category => category.value) })
+                        }}
+                        styles={{
+                            container: (provided) => ({ ...provided, width: '100%', marginBottom: '1rem' }),
+                        }}
+                    />
+                </div>
+            </div>
             <Button className="w-full">Add Product</Button>
         </form>
     )

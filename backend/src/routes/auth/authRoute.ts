@@ -9,5 +9,6 @@ router.post('/login', AuthController.Login.bind(AuthController));
 router.post('/logout', AuthController.Logout.bind(AuthController));
 router.get('/check-auth', authMiddleware, AuthController.CheckAuth.bind(AuthController));
 router.post('/loginGoogle', AuthController.LoginGoogle.bind(AuthController));
-
+router.post('/forgotPassword', AuthController.forgotPassword.bind(AuthController));
+router.post('/resetPassword', AuthController.resetPassword.bind(AuthController));
 export default router;

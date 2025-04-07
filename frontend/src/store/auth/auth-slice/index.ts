@@ -68,7 +68,7 @@ export const loginUser = createAsyncThunk(
 
 export const loginGoogle = createAsyncThunk(
     '/auth/google',
-    async (formData: UserFormData) => {
+    async (formData: {email: string | null, fullName: string | null, avatar: string | null}) => {
         const response = await axios.post('http://localhost:3000/api/auth/loginGoogle',
             formData,
             {

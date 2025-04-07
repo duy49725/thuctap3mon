@@ -78,7 +78,6 @@ const ShoppingAddress = ({ selectedId, setCurrentSelectedAddress }: ShoppingAddr
         }
       })
   }
-  console.log(initialAddressForm);
   return (
     <Card>
       <div className='mb-5 p-3 grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2'>

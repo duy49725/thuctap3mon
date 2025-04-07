@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import accImg from '../../assets/906_generated.jpg';
 import { useDispatch, useSelector } from "react-redux";
 import { useToast } from "@/hooks/use-toast";
@@ -8,8 +8,8 @@ import { DiscountCode, Order, ShippingAddress } from "@/config/entity";
 import ShoppingAddress from "@/components/shopping-view/address";
 import UserCartItemsContent from "@/components/shopping-view/cart-item-content";
 import { Button } from "@/components/ui/button";
-import { fetchAllShippingAddress } from "@/store/shopping/address-slice";
-import CouponCard from "@/components/shopping-view/CouponCard";
+import CouponCode from "@/components/shopping-view/CouponCode";
+import { fetchAllCart } from "@/store/shopping/cart-slice";
 
 const initialShippingAddress: ShippingAddress = {
     id: 0,
@@ -64,10 +64,12 @@ const ShoppingCheckout = () => {
         const orderData: Omit<Order, 'id'> = {
             userId: user.userId,
             cartId: cartList.id,
-            discountCodeId: 0,
+            discountCodeId: cartList.discount?.id ?? 0,
             subTotal: cartList.totalPrice,
-            discountAmount: 0,
-            totalAmount: cartList.totalPrice,
+            discountAmount: cartList.discount?.amount ?? 0,
+            totalAmount: cartList.discount && cartList.discount
+                ? cartList.discount.type == "fixed" ? cartList.totalPrice - cartList!.discount!.amount : cartList.totalPrice - (cartList.totalPrice * cartList.discount.amount / 100)
+                : cartList.totalPrice,
             status: 'pending',
             shippingAddressId: currentSelectedAddress?.id,
             paymentMethod: 'paypal',
@@ -78,7 +80,7 @@ const ShoppingCheckout = () => {
             payerId: ''
         }
         dispatch(createNewOrder(orderData)).then((data) => {
-            if (data.payload.success) {
+            if (data?.payload?.success) {
                 setIsPaymentStart(true);
             } else {
                 setIsPaymentStart(false);
@@ -88,6 +90,7 @@ const ShoppingCheckout = () => {
     if (approvalURL) {
         window.location.href = approvalURL;
     }
+
     return (
         <div className="flex flex-col">
             <div className="relative h-[300px] w-full overflow-hidden">
@@ -105,8 +108,30 @@ const ShoppingCheckout = () => {
                     }
                     <div className="mt-8 space-y-4">
                         <div className="flex justify-between">
-                            <span className="font-bold">Total</span>
-                            <span className="font-bold">${cartList.totalPrice}</span>
+                            <span className="font-bold">Total: </span>
+                            <span className="font-bold">
+                                {
+                                    cartList.totalPrice
+                                }
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="font-bold">Discount Amount: </span>
+                            <span className="font-bold">
+                                {
+                                    cartList.discount ? cartList.discount.type == "fixed" ? `${cartList!.discount?.amount} USD` : `${cartList!.discount?.amount}%` : 0
+                                }
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="font-bold">Final Price: </span>
+                            <span className="font-bold">
+                                {
+                                    cartList.discount && cartList.discount
+                                        ? cartList.discount.type == "fixed" ? cartList.totalPrice - cartList!.discount!.amount : cartList.totalPrice - (cartList.totalPrice * cartList.discount.amount / 100)
+                                        : cartList.totalPrice
+                                }
+                            </span>
                         </div>
                     </div>
                     <div className="mt-4 w-full">
@@ -118,9 +143,7 @@ const ShoppingCheckout = () => {
                             }
                         </Button>
                     </div>
-                    <div className='flex justify-center items-center min-h-screen bg-gray-100'>
-                        <CouponCard coupon={mockCoupon} />
-                    </div>
+                    <CouponCode />
                 </div>
             </div>
         </div>

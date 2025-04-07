@@ -2,12 +2,12 @@ export const shoppingViewHeaderMenuItems = [
     {
       id: "home",
       label: "Home",
-      path: "/shop/home",
+      path: "/shopping/home",
     },
     {
       id: "products",
       label: "Products",
-      path: "/shop/listing",
+      path: "/shopping/list",
     },
     {
       id: "contact",
@@ -18,12 +18,7 @@ export const shoppingViewHeaderMenuItems = [
       id: "blog",
       label: "Blog",
       path: "/shop/blog",
-    },
-    {
-      id: "search",
-      label: "Search",
-      path: "/shop/search",
-    },
+    }
   ];
   
 export const sortOptions = [

@@ -31,7 +31,6 @@ const UserCartItemsContent = ({cartItem}: CartItemProps) => {
     useEffect(() => {
         dispatch(fetchAllProducts())
     }, [])
-    console.log(allProduct);
     const handleUpdateQuantity = (getCartItem: cartDetails, typeOfAction: string) => {
         if(typeOfAction == 'plus'){
             let getCartItems = cartList.cartDetails || [];

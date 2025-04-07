@@ -12,16 +12,13 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet"
-import { Input } from '@/components/ui/input'; 
 import { shoppingViewHeaderMenuItems } from "@/config";
 import { Apple, LogOut, Menu, ShoppingCart, UserCog2 } from "lucide-react";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { checkAuth } from "@/store/auth/auth-slice";
 import { fetchAllCart } from "@/store/shopping/cart-slice";
-import { AspectRatio } from "../ui/aspect-ratio";
 import UserCartWrapper from "./cart-wrapper";
 
 
@@ -32,7 +29,9 @@ const MenuItem = () => {
         <nav className="flex flex-col mb-3 lg:mb-0 lg:flex-row lg:items-center gap-6">
             {
                 shoppingViewHeaderMenuItems.map((menuItem) => (
-                    <Label className="text-sm font-medium cursor-pointer" key={menuItem.id}>
+                    <Label
+                        onClick={() => navigate(menuItem.path)}
+                        className="text-sm font-medium cursor-pointer" key={menuItem.id}>
                         {menuItem.label}
                     </Label>
                 ))
@@ -84,8 +83,7 @@ const HeaderRightContent = () => {
             dispatch(fetchAllCart(user?.userId))
        }
     }, [dispatch, user.userId])
-
-    console.log(cartList, user);
+    const navigate = useNavigate();
     return (
         <div className="flex lg:items-center lg:flex-row flex-col gap-4">
             <Sheet
@@ -107,7 +105,7 @@ const HeaderRightContent = () => {
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-8 py-4">
-                        <UserCartWrapper totalCartAmount={cartList.totalPrice} setOpenCartSheet={setOpenCartSheet} cartItems={cartList.cartDetails && cartList.cartDetails.length > 0 ? cartList.cartDetails : []}/>
+                        <UserCartWrapper totalCartAmount={cartList.totalPrice} discount={cartList.discount} setOpenCartSheet={setOpenCartSheet} cartItems={cartList.cartDetails && cartList.cartDetails.length > 0 ? cartList.cartDetails : []}/>
                     </div>
                     <SheetFooter>
                         <SheetClose asChild>
@@ -127,8 +125,10 @@ const HeaderRightContent = () => {
                 <DropdownMenuContent side="right" className="w-56">
                     <DropdownMenuLabel>Logged in as Be Chuoi</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                        <UserCog2 className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem  onClick={() => {
+                            navigate('/shopping/account')
+                        }}>
+                        <UserCog2 className="mr-2 h-4 w-4"/>
                         Account
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

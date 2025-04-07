@@ -13,6 +13,20 @@ import { Repository } from "typeorm";
 import { order } from "paypal-rest-sdk";
 import { CartDetail } from "@models/cartDetail";
 
+interface PayPalSDKError {
+    message?: string;
+    response?: {
+      name: string;
+      message: string;
+      details?: { field: string; issue: string }[];
+      httpStatusCode?: number;
+      information_link?: string;
+      debug_id?: string;
+    };
+    httpStatusCode?: number;
+    stack?: string;
+  }
+
 class OrderController {
     private orderRepository: Repository<Order>;
     private userRepository: Repository<User>;
@@ -36,131 +50,164 @@ class OrderController {
 
     async createOrder(req: Request, res: Response): Promise<void> {
         try {
-            const {
-                userId,
-                cartId,
-                discountCodeId,
-                subTotal,
-                discountAmount,
-                totalAmount,
-                status,
-                shippingAddressId,
-                paymentMethod,
-                paymentStatus,
-                orderDate,
-                orderUpdateDate,
-                paymentId,
-                payerId,
-            } = req.body;
-
-            const user = await this.userRepository.findOne({ where: { id: userId } });
-            if (!user) {
-                res.status(404).json({ success: false, message: "User not found" });
-                return;
+          const {
+            userId,
+            cartId,
+            discountCodeId,
+            subTotal,
+            discountAmount: discountAmountRaw,
+            totalAmount,
+            status,
+            shippingAddressId,
+            paymentMethod,
+            paymentStatus,
+            orderDate,
+            orderUpdateDate,
+            paymentId: initialPaymentId,
+            payerId,
+          } = req.body;
+      
+          console.log("Request body:", JSON.stringify(req.body, null, 2));
+      
+          const discountAmount = typeof discountAmountRaw === "string" ? parseFloat(discountAmountRaw) : discountAmountRaw;
+          if (isNaN(discountAmount) || discountAmount < 0) {
+            res.status(400).json({ success: false, message: "Invalid discount amount" });
+            return;
+          }
+      
+          const user = await this.userRepository.findOne({ where: { id: userId } });
+          if (!user) {
+            res.status(404).json({ success: false, message: "User not found" });
+            return;
+          }
+      
+          const discount = discountCodeId
+            ? await this.discountRepository.findOne({ where: { id: Number(discountCodeId) } })
+            : null;
+          const shippingAddress = await this.shippingAddressRepository.findOne({
+            where: { id: Number(shippingAddressId) },
+          });
+          if (!shippingAddress) {
+            res.status(404).json({ success: false, message: "Shipping address not found" });
+            return;
+          }
+          const cart = await this.cartRepository.findOne({
+            where: { id: cartId },
+            relations: ["cartDetails", "cartDetails.product"],
+          });
+          if (!cart || !cart.cartDetails || cart.cartDetails.length === 0) {
+            res.status(404).json({ success: false, message: "Cart not found or empty" });
+            return;
+          }
+      
+          for (const item of cart.cartDetails) {
+            if (!item.product.name || typeof item.product.name !== "string") {
+              res.status(400).json({ success: false, message: "Product name is missing or invalid" });
+              return;
             }
-
-            const discount = discountCodeId
-                ? await this.discountRepository.findOne({ where: { id: Number(discountCodeId) } })
-                : null;
-
-            const shippingAddress = await this.shippingAddressRepository.findOne({
-                where: { id: Number(shippingAddressId) },
-            });
-            if (!shippingAddress) {
-                res.status(404).json({ success: false, message: "Shipping address not found" });
-                return;
-            }
-
-            const cart = await this.cartRepository.findOne({
-                where: { id: cartId },
-                relations: ["cartDetails", "cartDetails.product"],
-            });
-            if (!cart) {
-                res.status(404).json({ success: false, message: "Cart not found" });
-                return;
-            }
-
-            const create_payment_json = {
-                intent: "sale",
-                payer: { payment_method: "paypal" },
-                redirect_urls: {
-                    return_url: "http://localhost:5173/shopping/paypal-return",
-                    cancel_url: "http://localhost:5173/shopping/paypal-cancel",
-                },
-                transactions: [
-                    {
-                        item_list: {
-                            items: cart.cartDetails.map((item) => ({
-                                name: item.product.name,
-                                sku: item.product.id.toString(),
-                                price: item.unitPrice.toFixed(2),
-                                currency: "USD",
-                                quantity: item.quantity,
-                            })),
-                        },
-                        amount: {
-                            currency: "USD",
-                            total: totalAmount.toFixed(2),
-                        },
-                        description: "Payment for order",
-                    },
-                ],
-            };
-
-            const paymentInfo = await new Promise<paypal.PaymentResponse>((resolve, reject) => {
-                paypal.payment.create(create_payment_json, (error, payment) => {
-                    if (error) reject(error);
-                    else resolve(payment);
-                });
-            });
-
-            const newOrder = await this.orderRepository.create({
-                user,
-                cart: cart,
-                discountCode: discount || undefined,
-                subTotal,
-                discountAmount,
-                totalAmount,
-                status: status || "pending",
-                shippingAddress,
-                paymentMethod,
-                orderDate: orderDate ? new Date(orderDate) : undefined,
-                orderUpdateDate: orderUpdateDate ? new Date(orderUpdateDate) : undefined,
-                paymentStatus: paymentStatus || "pending",
-                paymentId: paymentInfo.id,
-                payerId: payerId || "",
-            });
-
-            await this.orderRepository.save(newOrder);
-
-            for(let item of cart.cartDetails){
-                const newOrderDetail = await this.orderDetailRepository.create({
-                    order: newOrder,
-                    product: item.product,
+          }
+      
+          const itemTotal = cart.cartDetails.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+      
+          const create_payment_json = {
+            intent: "sale",
+            payer: { payment_method: "paypal" },
+            redirect_urls: {
+              return_url: "http://localhost:5173/shopping/paypal-return",
+              cancel_url: "http://localhost:5173/shopping/paypal-cancel",
+            },
+            transactions: [
+              {
+                item_list: {
+                  items: cart.cartDetails.map((item) => ({
+                    name: item.product.name,
+                    sku: item.product.id.toString(),
+                    price: item.unitPrice.toFixed(2),
+                    currency: "USD",
                     quantity: item.quantity,
-                    unitPrice: item.unitPrice
-                })
-                await this.orderDetailRepository.save(newOrderDetail);
-            }
-
-            const approvalUrl = paymentInfo.links?.find((link) => link.rel === "approval_url")?.href;
-
-            res.status(200).json({
-                success: true,
-                data: {
-                    orderId: newOrder.id,
-                    approvalUrl,
+                  })),
                 },
+                amount: {
+                  currency: "USD",
+                  total: itemTotal.toFixed(2), // Full amount: 480.00
+                },
+                description: "Payment for order",
+              },
+            ],
+          };
+      
+          console.log("create_payment_json:", JSON.stringify(create_payment_json, null, 2));
+      
+          const paymentInfo = await new Promise<paypal.PaymentResponse>((resolve, reject) => {
+            paypal.payment.create(create_payment_json, (error: PayPalSDKError, payment) => {
+              if (error) {
+                console.error("PayPal Error Details:", {
+                  message: error.message,
+                  response: error.response ? JSON.stringify(error.response, null, 2) : undefined,
+                  httpStatusCode: error.httpStatusCode,
+                  stack: error.stack,
+                });
+                reject(error);
+              } else {
+                resolve(payment);
+              }
             });
+          });
+      
+          const newOrder = this.orderRepository.create({
+            user,
+            cart,
+            discountCode: discount || undefined,
+            subTotal,
+            discountAmount,
+            totalAmount, // Store the discounted total here (430.00)
+            status: status || "pending",
+            shippingAddress,
+            paymentMethod,
+            orderDate: orderDate ? new Date(orderDate) : undefined,
+            orderUpdateDate: orderUpdateDate ? new Date(orderUpdateDate) : undefined,
+            paymentStatus: paymentStatus || "pending",
+            paymentId: paymentInfo.id,
+            payerId: payerId || null,
+          });
+      
+          await this.orderRepository.save(newOrder);
+      
+          for (let item of cart.cartDetails) {
+            const newOrderDetail = this.orderDetailRepository.create({
+              order: newOrder,
+              product: item.product,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+            });
+            await this.orderDetailRepository.save(newOrderDetail);
+          }
+      
+          const approvalUrl = paymentInfo.links?.find((link) => link.rel === "approval_url")?.href;
+      
+          res.status(200).json({
+            success: true,
+            data: {
+              orderId: newOrder.id,
+              approvalUrl,
+            },
+          });
         } catch (error) {
-            console.error(error);
-            res.status(500).json({
-                success: false,
-                message: "Error while creating order",
-                error: error instanceof Error ? error.message : "Unknown error",
-            });
+          const paypalError = error as PayPalSDKError;
+          console.error("Caught Error:", {
+            message: paypalError.message,
+            response: paypalError.response ? JSON.stringify(paypalError.response, null, 2) : undefined,
+            httpStatusCode: paypalError.httpStatusCode,
+            stack: paypalError.stack,
+          });
+          res.status(500).json({
+            success: false,
+            message: "Error while creating order",
+            error: paypalError.message || "Unknown error",
+          });
         }
-    }
+      }
+
 
     async capturePayment(req: Request, res: Response): Promise<void> {
         try {
@@ -177,7 +224,7 @@ class OrderController {
     
             const order = await this.orderRepository.findOne({
                 where: { id: Number(orderId) },
-                relations: ["cart"], // Ensure cart relation is loaded
+                relations: ["cart"], 
             });
             if (!order) {
                 res.status(404).json({
@@ -198,15 +245,13 @@ class OrderController {
                 });
             });
     
-            // Update order details
             order.paymentId = paymentId as string;
             order.payerId = payerId as string;
             order.paymentStatus = "Completed";
             order.status = "processing";
             await this.orderRepository.save(order);
             console.log("Order updated successfully:", order.id);
-    
-            // Update product quantities
+
             const orderDetails = await this.orderDetailRepository.find({
                 where: { order: { id: orderId } },
                 relations: ["product"],
@@ -227,10 +272,9 @@ class OrderController {
                 console.log(`Updated product ${product.id}, new quantity: ${product.quantity}`);
             }
     
-            // Remove the cart
             const cart = await this.cartRepository.findOne({
                 where: { id: order.cart.id },
-                relations: ["cartDetails"], // Load cartDetails to inspect
+                relations: ["cartDetails"], 
             });
             if (!cart) {
                 console.warn("Cart not found for order:", order.cart.id);
@@ -243,6 +287,8 @@ class OrderController {
                         await this.cartDetailRepositor.remove(cartDetail);
                     }
                 }
+                cart.discount = null;
+                await this.cartRepository.save(cart);
             }
     
             res.status(200).json({
@@ -267,7 +313,7 @@ class OrderController {
             const { id } = req.params;
             const order = await this.orderRepository.findOne({
                 where: { id: Number(id) },
-                relations: ["user", "discountCode", "shippingAddress"]
+                relations: ["user", "discountCode", "shippingAddress", "orderDetails", "orderDetails.product"]
             });
             if (!order) {
                 res.status(404).json({ success: false, message: "Order not found" });

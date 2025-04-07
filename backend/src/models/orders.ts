@@ -1,8 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
 import { User } from "./users";
 import { DiscountCode } from "./discountCode";
 import { ShippingAddress } from "./shippingAddress";
 import { Cart } from "./carts";
+import { OrderDetail } from "./orderDetail";
 
 @Entity()
 export class Order {
@@ -52,6 +53,9 @@ export class Order {
     @Column()
     paymentId!: string;
 
-    @Column()
-    payerId!: string;
+    @Column({ nullable: true })
+    payerId!: string ;
+
+    @OneToMany(() => OrderDetail, orderDetail => orderDetail.order)
+    orderDetails!: OrderDetail[]
 }

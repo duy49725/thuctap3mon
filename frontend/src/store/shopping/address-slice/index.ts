@@ -7,7 +7,7 @@ interface addressResponse{
     data: ShippingAddress[]
 }
 
-const initialShippingAddress: ShippingAddress = {
+export const initialShippingAddress: ShippingAddress = {
     id: 0,
     user_id: '',
     fullName: '',

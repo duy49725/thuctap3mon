@@ -1,4 +1,4 @@
-import { Product, ProductResponse } from "@/config/entity";
+import { DiscountCode, Product, ProductResponse } from "@/config/entity";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
@@ -8,11 +8,12 @@ interface cartResponse {
     data: userCart
 }
 
-interface userCart {
+export interface userCart {
     id: number,
     createdAt: Date,
     updatedAt: Date,
     cartDetails: cartDetails[],
+    discount: DiscountCode | null,
     totalPrice: number
 }
 
@@ -21,6 +22,7 @@ const initializeUserCart = {
     createdAt: new Date(),
     updatedAt: new Date(),
     cartDetails: [],
+    discount: null,
     totalPrice: 0
 }
 
@@ -61,6 +63,25 @@ export const addToCart = createAsyncThunk(
     }
 )
 
+export const applyCouponCode = createAsyncThunk(
+    "/cart/applyCouponCode",
+    async ({ userId, discountCode_id }: { userId: string, discountCode_id: number }, { rejectWithValue }) => {
+        try {
+            const result = await axios.post(`http://localhost:3000/api/shopping/cart/applyCoupon/${userId}`,
+                { discountCode_id },
+                {
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                }
+            )
+            return result.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || 'Something went wrong')
+        }
+    }
+)
+
 export const updateCartItem = createAsyncThunk(
     "/cart/updateCartItem",
     async ({ cartDetail_id, quantity }: { cartDetail_id: number, quantity: number }) => {
@@ -87,11 +108,13 @@ export const deleteCartItem = createAsyncThunk(
 interface cartState {
     isLoading: boolean,
     cartList: userCart,
+    error: string
 }
 
 const initialState: cartState = {
     isLoading: false,
-    cartList: initializeUserCart
+    cartList: initializeUserCart,
+    error: ''
 }
 
 const shopProductSlice = createSlice({
@@ -112,6 +135,12 @@ const shopProductSlice = createSlice({
                 state.isLoading = false;
                 state.cartList = initializeUserCart
             })
+            .addCase(applyCouponCode.fulfilled, (state, action) => {
+                state.error = '';
+            })
+            .addCase(applyCouponCode.rejected, (state, action) => {
+                state.error = action.payload as string;
+            });
     }
 })
 

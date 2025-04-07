@@ -8,7 +8,21 @@ interface ShoppingProductState {
     allProduct: ProductResponse[],
     productDetail: ProductResponse | null;
     totalProduct: number;
+    relateProduct: ProductResponse[];
+    promotions: Promotions[];
 }
+
+interface Promotions {
+    id: number;
+    name: string;
+    description: string;
+    discountAmount: number;
+    discountType: string;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    products: ProductResponse[];
+  }
 
 const initializeResponse: ProductResponse = {
     id: 0,
@@ -63,6 +77,10 @@ interface ShoppingProductResponse {
         totalProduct: number
     }
 }
+interface PromotionsResponse {
+    success: boolean;
+    data: Promotions[]; 
+  }
 
 interface ShoppingProductDetailResponse{
     success: boolean,
@@ -74,7 +92,9 @@ const initialState: ShoppingProductState = {
     productList: [],
     allProduct: [],
     productDetail: null,
-    totalProduct: 0
+    totalProduct: 0,
+    relateProduct: [],
+    promotions: []
 }
 
 interface fetchAllShoppingProductsParams {
@@ -124,6 +144,21 @@ export const fetchShoppingProductDetail = createAsyncThunk(
     }
 )
 
+export const fetchRelatedProduct = createAsyncThunk(
+    "/product/relateProduct",
+    async (fruitType_id: number | undefined) => {
+        const result = await axios.get(`http://localhost:3000/api/shopping/product/getRelateProduct/${fruitType_id}`);
+        return result.data;
+    }
+)
+
+export const fetchPromotionsWithProducts = createAsyncThunk(
+    "/product/fetchPromotionsWithProducts",
+    async() => {
+        const response = await axios.get('http://localhost:3000/api/shopping/product/promotionWithProduct');
+        return response.data as PromotionsResponse;
+    }
+)
 const shopProductSlice = createSlice({
     name: 'shoppingProducts',
     initialState,
@@ -168,6 +203,28 @@ const shopProductSlice = createSlice({
                 state.isLoading = false;
                 state.allProduct = []
             })
+            .addCase(fetchRelatedProduct.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(fetchRelatedProduct.fulfilled, (state, action: PayloadAction<ShoppingProductResponse>) =>{
+                state.isLoading = false;
+                state.relateProduct = action.payload.data;
+            })
+            .addCase(fetchRelatedProduct.rejected, (state) => {
+                state.isLoading = false;
+                state.relateProduct = [];
+            })
+            .addCase(fetchPromotionsWithProducts.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(fetchPromotionsWithProducts.fulfilled, (state, action: PayloadAction<PromotionsResponse>) => {
+                state.isLoading = false;
+                state.promotions = action.payload.data;
+            })
+            .addCase(fetchPromotionsWithProducts.rejected, (state, action) => {
+                state.isLoading =  false;
+                state.promotions = []
+            });
     }
 })
 

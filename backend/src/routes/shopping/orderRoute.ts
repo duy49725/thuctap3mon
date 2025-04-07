@@ -6,6 +6,6 @@ const router: Router = express.Router();
 router.post('/create', orderController.createOrder.bind(orderController));
 router.post('/capture', orderController.capturePayment.bind(orderController));
 router.get('/list/:userId', orderController.getAllOrderOfUser.bind(orderController));
-router.get('/detail/:id', orderController.getAllOrderOfUser.bind(orderController));
+router.get('/detail/:id', orderController.getOrderDetail.bind(orderController));
 
 export default router;

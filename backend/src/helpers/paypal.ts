@@ -6,4 +6,4 @@ paypal.configure({
     client_secret: "EE-zE-3qtTl4Fi6d-iVhIcDSl1luPB8Aunfn8xKt2TDoZTF9EDoCunAZuDgqvKv9qHUClvamywVpJYKW"
 })
 
-export default paypal
+export default paypal;

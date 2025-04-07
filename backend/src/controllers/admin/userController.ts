@@ -2,8 +2,10 @@ import { AppDataSource } from "@database/data-source";
 import { UserRole } from "@models/role";
 import { User } from "@models/users";
 import { Request, Response } from "express";
-import { Repository } from "typeorm";
-import bcrypt from 'bcryptjs'
+import { MoreThan, Repository } from "typeorm";
+import bcrypt from 'bcryptjs';
+import * as crypto from "crypto";
+import * as nodemailer from "nodemailer";
 
 class UserController{
     private userRepository: Repository<User>;

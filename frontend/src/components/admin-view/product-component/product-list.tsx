@@ -11,7 +11,6 @@ interface ProductListProps{
 }
 
 const ProductList = ({products, onEdit, onDelete}: ProductListProps) =>{
-    console.log(products);
     return(
         <div className="overflow-auto">
             <Table>
@@ -34,7 +33,7 @@ const ProductList = ({products, onEdit, onDelete}: ProductListProps) =>{
                             <TableRow key={product.id}>
                                     <TableCell>{product.id}</TableCell>
                                     <TableCell>{product?.name}</TableCell>
-                                    <TableCell>{product.fruitType?.name}</TableCell>
+                                    <TableCell>{product?.fruitType?.name}</TableCell>
                                     <TableCell>{product.price}</TableCell>
                                     <TableCell className="overflow-hidden">
                                         <AspectRatio ratio={16/9}>

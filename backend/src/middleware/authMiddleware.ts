@@ -1,4 +1,6 @@
+import { AppDataSource } from "@database/data-source";
 import { UserRole } from "@models/role";
+import { User } from "@models/users";
 import { NextFunction, Request, Response } from "express";
 import jwt from 'jsonwebtoken';
 
@@ -20,6 +22,7 @@ interface UserVerify {
 
 const authMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const token = req.cookies.token;
+    console.log(token)
     if (!token) {
         res.status(401).json({
             success: false,
@@ -40,3 +43,19 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction): 
 }
 
 export default authMiddleware;
+
+export const authorizeRoles = (roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+       res.status(401).json({ message: 'Authentication required' });
+    }
+    
+    const hasRole = req.user && req.user.roles.some((role: any) => roles.includes(role.roleName));
+    
+    if (!hasRole) {
+       res.status(403).json({ message: 'Access denied' });
+    }
+    
+    next();
+  };
+}

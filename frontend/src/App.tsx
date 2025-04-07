@@ -22,6 +22,13 @@ import ShoppingAccount from "./page/shopping-view/account";
 import ShoppingCheckout from "./page/shopping-view/checkout";
 import PaypalReturnPage from "./page/shopping-view/payment-return";
 import PaymentSuccess from "./page/shopping-view/payment-success";
+import LuckyWheel from "./page/shopping-view/luckyPage";
+import ProductDetail from "./page/shopping-view/productDetail";
+import AdminOrder from "./page/admin-view/order";
+import AdminApproveReview from "./page/admin-view/approveReview";
+import Contact from "./page/shopping-view/contact";
+import ResetPassword from "./components/auth/reset-password";
+import ForgotPassword from "./components/auth/forgot-password";
 
 
 function App() {
@@ -43,8 +50,10 @@ function App() {
           <Route path="product" element={<AdminProductPage />} />
           <Route path="feature" element={<AdminFeature />} />
           <Route path="discount" element={<AdminDiscountCodePage />} />
+          <Route path="order" element={<AdminOrder />} />
           <Route path="role" element={<AdminRolePage />} />
           <Route path="user" element={<AdminUserPage />} />
+          <Route path="approveReview" element={<AdminApproveReview />} />
         </Route>
         <Route path="/shopping" element={<ShoppintLayout />}>
           <Route path="home" element={<Home />} />
@@ -53,9 +62,14 @@ function App() {
           <Route path="checkout" element={<ShoppingCheckout />} />
           <Route path="paypal-return" element={<PaypalReturnPage />} />
           <Route path="payment-success" element={<PaymentSuccess />} />
+          <Route path="lucky" element={<LuckyWheel />} />
+          <Route path="product/:productId" element={<ProductDetail />} /> 
+          <Route path="contact" element={<Contact />} />
         </Route>
         <Route path="/auth/register" element={<RegisterPage />} />
         <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/:token" element={<ResetPassword />} />
+        <Route path="/auth/forgotPassword" element={<ForgotPassword />} />
       </Routes>
     </div>
   )

@@ -28,7 +28,7 @@ class CartController {
                 where: {
                     user: { id: userId },
                 },
-                relations: ['cartDetails', 'cartDetails.product'],
+                relations: ['cartDetails', 'cartDetails.product', 'discount'],
             });
 
             if (!userCart) {
@@ -39,18 +39,16 @@ class CartController {
                 return
             }
 
-            // Xử lý bất đồng bộ để xóa các cartDetail không hợp lệ
             const validCartDetails = [];
             for (const detail of userCart.cartDetails) {
                 if (!detail.product || !detail.product.isActive) {
-                    await this.cartDetailRepository.remove(detail); // Await để đảm bảo xóa xong
+                    await this.cartDetailRepository.remove(detail); 
                 } else {
                     validCartDetails.push(detail);
                 }
             }
             userCart.cartDetails = validCartDetails;
 
-            // Tính tổng giá
             const listPrice = userCart.cartDetails.map(cartDetail => ({
                 unitPrice: cartDetail.unitPrice,
                 quantity: cartDetail.quantity,
@@ -86,14 +84,14 @@ class CartController {
                 where: { user: { id: userId } },
                 relations: ['cartDetails', 'cartDetails.product']
             })
-            if (!userCart) {
+            if (!userCart) { 
                 res.status(400).json({
                     success: false,
                     data: "Invalid User"
                 })
                 return;
             }
-            const listPrice = userCart.cartDetails.map(cartDetail => cartDetail.unitPrice);
+            const listPrice = userCart.cartDetails.map(cartDetail => cartDetail.unitPrice * cartDetail.quantity);
             const totalPrice = listPrice.reduce((total, value) => total + value);
             if (discount.minOrderValue && totalPrice < discount.minOrderValue) {
                 res.status(400).json({

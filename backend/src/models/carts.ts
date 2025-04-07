@@ -14,7 +14,7 @@ export class Cart {
 
     @ManyToOne(() => DiscountCode, (discount) => discount.cart, {nullable: true})
     @JoinColumn({ name: 'discount_code_id' })
-    discount!: DiscountCode;
+    discount!: DiscountCode | null;
 
     @CreateDateColumn({ type: 'timestamp' })
     createdAt!: Date;

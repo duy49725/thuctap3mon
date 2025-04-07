@@ -20,15 +20,15 @@ const AdminProductPage = () => {
         dispatch(fetchAllProduct({ page: currentPage, limit: 10 }))
     }, [dispatch, currentPage])
 
-    const handleAddProduct = (formData: Omit<Product, 'id'>) => {
+    const handleAddProduct = (formData: { product: Omit<Product, 'id'>; images: string[] }) => {
         dispatch(addNewProduct(formData)).then(() => {
             dispatch(fetchAllProduct({ page: currentPage, limit: 10 }))
             setOpenDialogAdd(false);
         })
     }
     console.log(editingProduct);
-    const handleEditProduct = (id: number, formData: Omit<Product, 'id'>) => {
-        dispatch(editProduct({ id, formData })).then(() => {
+    const handleEditProduct = (formData: {id: number, product: Omit<Product, 'id'>; images: string[] }) => {
+        dispatch(editProduct(formData)).then(() => {
             dispatch(fetchAllProduct({ page: currentPage, limit: 10 }));
             setEditingProduct(null);
             setOpenDialog(false);
@@ -47,16 +47,16 @@ const AdminProductPage = () => {
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-6">Manage Promotion</h1>
+            <h1 className="text-3xl font-bold mb-6 text-center">Manage Fruit</h1>
             {
                 isLoading ? (
                     <p>Loading...</p>
                 ) : (
                     <Dialog open={openDialogAdd} onOpenChange={setOpenDialogAdd}>
                         <DialogTrigger asChild>
-                            <Button className="text-white py-2 px-2 rounded mb-4">Add New Promotion</Button>
+                            <Button className="text-white py-2 px-2 rounded mb-4">Add New Fruit</Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-[600px] flex flex-col items-center justify-center">
+                        <DialogContent className="max-w-[800px] flex flex-col items-center justify-center">
                             <h2>Add New Promotion</h2>
                             <AddProductForm onAdd={handleAddProduct} />
                         </DialogContent>
@@ -66,7 +66,7 @@ const AdminProductPage = () => {
             {
                 editingProduct && (
                     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-                        <DialogContent className="max-w-[600px] flex flex-col items-center justify-center">
+                        <DialogContent className="max-w-[800px] flex flex-col items-center justify-center">
                             <h2>Edit Promotion</h2>
                             <UpdateProductForm product={editingProduct} onSave={handleEditProduct} />
                         </DialogContent>
@@ -92,7 +92,8 @@ const AdminProductPage = () => {
                                     image: product.image,
                                     isActive: product.isActive,
                                     category_id: product.categories.map((item) => item.id),
-                                    promotion_id: product.promotions.map((item) => item.id)
+                                    promotion_id: product.promotions.map((item) => item.id),
+                                    productImages: product.productImages
                                 })
                                 setOpenDialog(true)
                             }}

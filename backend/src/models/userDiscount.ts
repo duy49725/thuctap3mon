@@ -2,7 +2,7 @@ import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./users";
 import { DiscountCode } from "./discountCode";
 
-@Entity('userCoupons')
+@Entity('userDiscount')
 export class UserCoupon {
     @PrimaryGeneratedColumn()
     id!: number;
@@ -13,6 +13,6 @@ export class UserCoupon {
     @ManyToOne(() => DiscountCode, (discountCode) => discountCode.id)
     discountCode!: DiscountCode;
 
-    @Column({ type: 'datetime' })
-    usedAt!: Date;
+    @Column({ type: 'datetime', nullable: true })
+    usedAt?: Date;
 }

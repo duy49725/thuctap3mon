@@ -5,6 +5,7 @@ import ShoppingAddress from "@/components/shopping-view/address";
 import ShoppingOrders from "@/components/shopping-view/orders";
 import ShoppingProfile from "@/components/shopping-view/profile";
 import { ShippingAddress } from "@/config/entity";
+import CouponCode from "@/components/shopping-view/CouponCode";
 
 const initialShippingAddress: ShippingAddress = {
     id: 0,
@@ -34,6 +35,7 @@ const ShoppingAccount = () => {
                             <TabsTrigger value="orders">Orders</TabsTrigger>
                             <TabsTrigger value="address">Address</TabsTrigger>
                             <TabsTrigger value="profile">Profile</TabsTrigger>
+                            <TabsTrigger value="discount">Discount</TabsTrigger>
                         </TabsList>
                         <TabsContent value="orders">
                             <ShoppingOrders />
@@ -46,6 +48,9 @@ const ShoppingAccount = () => {
                         </TabsContent>
                         <TabsContent value="profile">
                             <ShoppingProfile />
+                        </TabsContent>
+                        <TabsContent value="discount">
+                            <CouponCode />
                         </TabsContent>
                     </Tabs>
                 </div>
