@@ -6,18 +6,21 @@ import { Promotion } from "@models/promotions";
 import { FruitType } from "@models/fruitTypes";
 import { Request, Response } from "express";
 import { imageUploadUtil } from "src/helpers/cloudinary";
+import { ProductImage } from "@models/productImage";
 
 class ProductController{
     private productRepository: Repository<Product>;
     private categoryRepository: Repository<Category>;
     private promotionRepository: Repository<Promotion>;
     private fruitTypeRepository: Repository<FruitType>;
+    private productImageRepository: Repository<ProductImage>;
 
     constructor(){
         this.productRepository = AppDataSource.getRepository(Product);
         this.categoryRepository = AppDataSource.getRepository(Category);
         this.promotionRepository = AppDataSource.getRepository(Promotion);
         this.fruitTypeRepository = AppDataSource.getRepository(FruitType);
+        this.productImageRepository = AppDataSource.getRepository(ProductImage);
     }
 
     async getAllProduct(req: Request, res: Response): Promise<void>{
@@ -26,7 +29,7 @@ class ProductController{
             const limit = Number(req.query.limit);
             const skip = (page - 1) * limit;
             const [products, totalProducts] = await this.productRepository.findAndCount({
-                relations: ['categories', 'promotions', 'fruitType'],
+                relations: ['categories', 'promotions', 'fruitType', 'productImages'],
                 take: limit,
                 skip
             });
@@ -61,7 +64,7 @@ class ProductController{
             const {id} = req.params;
             const product = await this.productRepository.findOne({
                 where: {id: Number(id)},
-                relations: ['categories', 'promotions', 'fruitType']
+                relations: ['categories', 'promotions', 'fruitType', 'productImages']
             })
             if(!product){
                 res.status(404).json({
@@ -110,9 +113,25 @@ class ProductController{
         }
     }
 
+    async getAllProductImages(req: Request, res: Response): Promise<void>{
+        try {
+            const productImages = await this.productImageRepository.find();
+            res.json({
+                success: true,
+                data: productImages
+            })
+        } catch (error) {
+            res.json({
+                success: false,
+                message: "Error"
+            })
+        }
+    }
+
     async addProduct(req: Request, res: Response): Promise<void>{
         try {
-            let {category_id, promotion_id, fruitType_id, image, ...rest} = req.body;
+            let {category_id, promotion_id, fruitType_id, image, images, ...rest} = req.body;
+            console.log('images', images);
             const categories = await Promise.all(
                 category_id.map((id: any) => this.categoryRepository.findOneBy({id}))
             )
@@ -124,6 +143,16 @@ class ProductController{
             image = imageUrl;*/
             const product = await this.productRepository.create({...rest, image, categories, promotions, fruitType})
             await this.productRepository.save(product);
+            if (images && Array.isArray(images) && images.length > 0) {
+                const productImages = images.map((image: string) =>
+                    this.productImageRepository.create({
+                        product: product as any,
+                        image
+                    })
+                );
+                await this.productImageRepository.save(productImages); 
+            }
+        
             res.status(200).json({
                 success: true,
                 message: 'Add successfully'
@@ -137,59 +166,97 @@ class ProductController{
         }
     }
 
-    async updateProduct(req: Request, res: Response): Promise<void>{
+    async updateProduct(req: Request, res: Response): Promise<void> {
         try {
-            const {id} = req.params;
-            let {category_id, promotion_id, fruitType_id, image, name, description, price, quantity, isActive, unit} = req.body;
+            const { id } = req.params;
+            let { category_id, promotion_id, fruitType_id, image, images, name, description, price, quantity, isActive, unit } = req.body;
+    
+            const product: any = await this.productRepository.findOne({
+                where: { id: Number(id) },
+                relations: ['productImages'], 
+            });
+    
+            if (!product) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Không tìm thấy sản phẩm để cập nhật',
+                });
+                return;
+            }
 
-            const product: any = await this.productRepository.findOneBy({id: Number(id)});
-
-            /*if(req.file){
-                const imageUrl = await this.uploadImage(req.file as Express.Multer.File);
-                product.image = imageUrl;
-            }*/
-
-            if(category_id){
+            if (category_id) {
                 const categories = await Promise.all(
-                    category_id.map((id: any) => this.categoryRepository.findOneBy({id}))
-                )
-                product!.categories = categories || product.categories;
+                    category_id.map((id: any) => this.categoryRepository.findOneBy({ id }))
+                );
+                product.categories = categories || product.categories;
             }
-            if(promotion_id){
+            if (promotion_id) {
                 const promotions = await Promise.all(
-                    promotion_id.map((id: any) => this.promotionRepository.findOneBy({id}))
-                )
-                product!.promotions = promotions || product.promotions;
+                    promotion_id.map((id: any) => this.promotionRepository.findOneBy({ id }))
+                );
+                product.promotions = promotions || product.promotions;
             }
-            if(fruitType_id){
-                const fruitType = await this.fruitTypeRepository.findOneBy({id: fruitType_id});
-                product!.fruitType = fruitType as FruitType || product.fruitType;
+            if (fruitType_id) {
+                const fruitType = await this.fruitTypeRepository.findOneBy({ id: fruitType_id });
+                product.fruitType = fruitType as FruitType || product.fruitType;
             }
-            //Object.assign(product, rest);
             product.name = name || product.name;
             product.description = description || product.description;
             product.image = image || product.image;
             product.price = price || product.price;
             product.quantity = quantity || product.quantity;
             product.unit = unit || product.unit;
-            product.isActive = isActive || product.isActive;
+            product.isActive = isActive !== undefined ? isActive : product.isActive;
             await this.productRepository.save(product);
+
+            if (images && Array.isArray(images) && images.length > 0) {
+                if (product.productImages && product.productImages.length > 0) {
+                    await this.productImageRepository.delete({
+                        product: { id: Number(id) },
+                    });
+                }
+                const newProductImages = images.map((image: string) =>
+                    this.productImageRepository.create({
+                        product: product,
+                        image,
+                    })
+                );
+                await this.productImageRepository.save(newProductImages);
+            }
+    
             res.status(200).json({
                 success: true,
-                data: 'update successfully'
-            })
+                data: 'Cập nhật sản phẩm thành công',
+            });
         } catch (error) {
             res.status(500).json({
                 success: false,
-                message: 'An error occurred while update the data',
-                error: error instanceof Error ? error.message : 'Unknown error',
-            })
+                message: 'Đã xảy ra lỗi khi cập nhật sản phẩm',
+                error: error instanceof Error ? error.message : 'Lỗi không xác định',
+            });
         }
     }
 
     async deleteProduct(req: Request, res: Response): Promise<void>{
         try {
             const {id} = req.params;
+            const product = await this.productRepository.findOne({
+                where: { id: Number(id) },
+                relations: ['productImages']
+            });
+    
+            if (!product) {
+                res.status(404).json({
+                    success: false,
+                    message: 'Không tìm thấy sản phẩm để xóa'
+                });
+                return;
+            }
+            if (product.productImages && product.productImages.length > 0) {
+                await this.productImageRepository.delete({
+                    product: { id: Number(id) }
+                });
+            }
             await this.productRepository.delete(id);
             res.status(200).json({
                 success: true,

@@ -20,6 +20,7 @@ interface AdminProductState {
     totalPages: number;
     pageSize: number;
     totalProduct: number;
+    productImages: {id: number; productId: number, image: string}[]
 }
 
 const initialState: AdminProductState = {
@@ -28,16 +29,24 @@ const initialState: AdminProductState = {
     currentPage: 1,
     totalPages: 0,
     pageSize: 10,
-    totalProduct: 0
+    totalProduct: 0,
+    productImages: []
 }
-
+interface AddProductPayload {
+    product: Omit<Product, 'id'>; 
+    images: string[]; 
+}
+interface EditProductPayload {
+    id: number;
+    product: Omit<Product, 'id'| 'productImages'>; 
+    images: string[]; 
+}
 export const addNewProduct = createAsyncThunk(
     "/product/adNewProduct",
-    async (formData: Omit<Product, 'id'>, { rejectWithValue }) => {
+    async ({product, images}: AddProductPayload, { rejectWithValue }) => {
         try {
-            console.log(formData, 'dom');
             const result = await axios.post("http://localhost:3000/api/admin/product/add",
-                formData,
+                {...product, images},
                 {
                     headers: {
                         "Content-Type": "application/json"
@@ -64,21 +73,37 @@ export const fetchAllProduct = createAsyncThunk(
     }
 )
 
-export const editProduct = createAsyncThunk(
-    "/product/editProduct",
-    async ({ id, formData }: { id: number, formData: Omit<Product, 'id'> }) => {
-        const result = await axios.put(`http://localhost:3000/api/admin/product/update/${id}`,
-            formData,
-            {
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                
-            }
-        )
-        return result.data;
+export const fetchAllProductImage = createAsyncThunk(
+    "/product/fetchAllProductImage",
+    async() => {
+        try {
+            const result = await axios.get(`http://localhost:3000/api/admin/product/getProductImage`);
+            return result.data;
+        } catch (error) {
+            console.log(error);
+        }
     }
 )
+
+export const editProduct = createAsyncThunk(
+    "/product/editProduct",
+    async ({ id, product, images }: EditProductPayload, { rejectWithValue }) => {
+        try {
+            const result = await axios.put(
+                `http://localhost:3000/api/admin/product/update/${id}`,
+                {...product, images},
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            return result.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data || error.message);
+        }
+    }
+);
 
 export const deleteProduct = createAsyncThunk(
     "/product/deleteProduct",
@@ -117,6 +142,17 @@ const AdminProductSlice = createSlice({
             })
             .addCase(addNewProduct.rejected, (state) => {
                 state.isLoading = false;
+            })
+            .addCase(fetchAllProductImage.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(fetchAllProductImage.fulfilled, (state, action) => {
+                state.isLoading = false;
+                state.productImages = action.payload.data
+            })
+            .addCase(fetchAllProductImage.rejected, (state) => {
+                state.isLoading = false;
+                state.productImages = []
             })
     }
 })

@@ -14,4 +14,5 @@ export const AppDataSource = new DataSource({
     logging: false,
     dropSchema: false,
     entities: ['./src/models/*.ts'],
+    migrations: ['./src/migrations/*.ts']
 })

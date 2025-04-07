@@ -15,8 +15,12 @@ class ShippingAddressController{
     async getAllShippingAddress(req: Request, res: Response): Promise<void>{
         try {
             const {userId} = req.params;
+            const {page = 1, limit = 10} = req.query;
+            const offset = (Number(page) - 1) * Number(limit);
             const allShippingAddress = await this.shippingAddressRepository.find({
-                where: {user: {id: userId}}
+                where: {user: {id: userId}},
+                skip: offset,
+                take: Number(limit)
             })
             if(!allShippingAddress){
                 res.status(404).json({
@@ -36,10 +40,13 @@ class ShippingAddressController{
 
     async createShippingAddress(req: Request, res: Response): Promise<void>{
         try {
-            const {userId, fullName, streetAddress, city, state, postal_code, country} = req.body;
+            const {userId} = req.params;
+            const {fullName, streetAddress, city, state, postal_code, country, is_default, phoneNumber, note} = req.body;
+            console.log(req.body);
             const user = await this.userRepository.findOne({
-                where: {id: userId}
+                where: {id: String(userId)}
             })
+            console.log(userId);
             if(!user){
                 res.status(404).json({
                     success: false,
@@ -54,7 +61,10 @@ class ShippingAddressController{
                 city: city,
                 state: state,
                 postal_code: postal_code,
-                country: country
+                country: country,
+                is_default: is_default,
+                phoneNumber: phoneNumber,
+                note: note
             })
             await this.shippingAddressRepository.save(newAddress);
             res.status(200).json({
@@ -62,19 +72,22 @@ class ShippingAddressController{
                 data: "Add Shipping Address Successfully"
             })
         } catch (error) {
-            res.status(500).json({ success: false, message: "Error" });
-        }
+            res.status(500).json({
+                success: false,
+                message: 'An error occurred while update the data',
+                error: error instanceof Error ? error.message : 'Unknown error',
+            })        }
     }
 
     async updateShippingAddress(req: Request, res: Response): Promise<void>{
         try {
             const {id, userId} = req.params;
-            const { fullName, streetAddress, city, state, postal_code, country} = req.body;
+            const { fullName, streetAddress, city, state, postal_code, country, phoneNumber, note} = req.body;
             const user = await this.userRepository.findOne({
                 where: {id: userId}
             }) 
             if(user){
-                await this.shippingAddressRepository.update(id, {user, fullName, streetAddress, city, state, postal_code, country});
+                await this.shippingAddressRepository.update(id, {user, fullName, streetAddress, city, state, postal_code, country, phoneNumber, note});
             }
             res.status(200).json({
                 success: true,

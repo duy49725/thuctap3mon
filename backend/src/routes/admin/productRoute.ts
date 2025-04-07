@@ -10,5 +10,5 @@ router.get('/getById/:id', productController.getProductById.bind(productControll
 router.post('/add', productController.addProduct.bind(productController));
 router.put('/update/:id', productController.updateProduct.bind(productController));
 router.delete('/delete/:id', productController.deleteProduct.bind(productController));
-
+router.get('/getProductImage', productController.getAllProductImages.bind(productController));
 export default router;

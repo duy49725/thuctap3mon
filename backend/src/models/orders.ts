@@ -1,7 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
 import { User } from "./users";
 import { DiscountCode } from "./discountCode";
 import { ShippingAddress } from "./shippingAddress";
+import { Cart } from "./carts";
+import { OrderDetail } from "./orderDetail";
 
 @Entity()
 export class Order {
@@ -12,6 +14,10 @@ export class Order {
     @JoinColumn({ name: 'user_id' })
     user!: User;
 
+    @ManyToOne(() => Cart)
+    @JoinColumn({ name: 'cart_id' })
+    cart!: Cart;
+
     @ManyToOne(() => DiscountCode, { nullable: true })
     @JoinColumn({ name: 'discountCode_id' })
     discountCode!: DiscountCode;
@@ -21,6 +27,9 @@ export class Order {
 
     @Column('decimal', { precision: 10, scale: 2, default: 0 })
     discountAmount!: number;
+
+    @Column('decimal', { precision: 10, scale: 2, default: 0 })
+    totalAmount!: number;
 
     @Column({ type: 'enum', enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'], default: 'pending' })
     status!: string;
@@ -44,6 +53,9 @@ export class Order {
     @Column()
     paymentId!: string;
 
-    @Column()
-    payerId!: string;
+    @Column({ nullable: true })
+    payerId!: string ;
+
+    @OneToMany(() => OrderDetail, orderDetail => orderDetail.order)
+    orderDetails!: OrderDetail[]
 }

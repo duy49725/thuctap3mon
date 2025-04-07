@@ -59,10 +59,7 @@ const ImageUpload = ({imageFile, setImageFile, setUploadedImageUrl, imageLoading
 
     useEffect(() => {
         if(imageFile != null) uploadImageToCloudinary();
-    }, [imageFile])
-
-    console.log(imageFile);
-    
+    }, [imageFile])    
 
     return(
         <div className={`w-full mt-4 ${isCustomStyling ? "" : "max-w-md mx-auto"}`}>

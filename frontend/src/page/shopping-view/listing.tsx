@@ -4,20 +4,22 @@ import ShoppingProductTile from '@/components/shopping-view/product-tile';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { sortOptions } from '@/config';
-import { fetchAllShoppingProducts } from '@/store/shopping/product-slice';
+import { fetchAllShoppingProducts, fetchShoppingProductDetail } from '@/store/shopping/product-slice';
 import { AppDispatch, RootState } from '@/store/store';
 import { ArrowUpDownIcon, Search } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useToast } from "@/hooks/use-toast";
 import { addToCart, fetchAllCart } from "@/store/shopping/cart-slice";
+import ProductDetailsDialog from "@/components/shopping-view/product-detail";
 
 const ShoppingListing = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { productList, totalProduct } = useSelector((state: RootState) => state.shopProduct);
+  const [openDetailsDialog, setOpenDetailsDialog] = useState<boolean>(false);
+  const { productList, totalProduct, productDetail } = useSelector((state: RootState) => state.shopProduct);
   const { cartList, isLoading } = useSelector((state: RootState) => state.userCart);
   const { user } = useSelector((state: RootState) => state.adminAuth);
-  const {toast} = useToast();
+  const { toast } = useToast();
   const [limit, setLimit] = useState<number>(8);
   const [searchInput, setSearchInput] = useState<string>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -64,6 +66,17 @@ const ShoppingListing = () => {
         }
       })
   }
+  useEffect(() => {
+    if (productDetail !== null) setOpenDetailsDialog(true);
+  }, [productDetail])
+  function handleGetProductDetails(getCurrentProductId: number) {
+    dispatch(fetchShoppingProductDetail(getCurrentProductId));
+  }
+  useEffect(() => {
+    if (!productDetail) {
+      setOpenDetailsDialog(false);
+    }
+  }, [productDetail])
   return (
     <div className='grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 p-4 md:p-6'>
       <ProductFilter />
@@ -111,7 +124,7 @@ const ShoppingListing = () => {
         </div>
         <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4'>
           {productList.length > 0
-            ? productList.map((productItem) => <ShoppingProductTile product={productItem} key={productItem.id} handleAddToCart={handleAddToCart} />)
+            ? productList.map((productItem) => <ShoppingProductTile handleGetProductDetails={handleGetProductDetails} product={productItem} key={productItem.id} handleAddToCart={handleAddToCart} className="" />)
             : <p className="text-center">No products found.</p>
           }
         </div>
@@ -124,7 +137,9 @@ const ShoppingListing = () => {
           </p>
         )}
       </div>
+      <ProductDetailsDialog open={openDetailsDialog} setOpen={setOpenDetailsDialog} productDetails={productDetail} />
     </div>
+
   );
 };
 

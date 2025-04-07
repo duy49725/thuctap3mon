@@ -1,8 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn, OneToMany } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne } from "typeorm";
 import { FruitType } from "./fruitTypes";
 import { Category } from "./categories";
 import { Promotion } from "./promotions";
 import { CartDetail } from "./cartDetail";
+import { Review } from "./reviews";
+import { ReviewStatistic } from "./reviewStatistic";
+import { ProductImage } from "./productImage";
 
 @Entity('products')
 export class Product {
@@ -58,4 +61,13 @@ export class Product {
 
     @OneToMany(() => CartDetail, (cartDetail) => cartDetail.product)
     cartDetails!: CartDetail[];
+
+    @OneToMany(() => Review, (review) => review.product)
+    reviews!: Review[];
+
+    @OneToOne(() => ReviewStatistic, (stats) => stats.product)
+    reviewStats!: ReviewStatistic;
+
+    @OneToMany(() => ProductImage, (images) => images.product)
+    productImages!: ProductImage[]
 }

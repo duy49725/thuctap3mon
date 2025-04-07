@@ -1,5 +1,7 @@
-import { PrimaryGeneratedColumn, Column, Entity, CreateDateColumn, UpdateDateColumn, ManyToMany, JoinTable, OneToOne } from "typeorm";
+import { PrimaryGeneratedColumn, Column, Entity, CreateDateColumn, UpdateDateColumn, ManyToMany, JoinTable, OneToOne, OneToMany } from "typeorm";
 import { UserRole } from "./role";
+import { Review } from "./reviews";
+import { ReviewReply } from "./reviewReplies";
 
 @Entity()
 export class User {
@@ -33,4 +35,16 @@ export class User {
     @ManyToMany(() => UserRole, (role) => role.users)
     @JoinTable()
     roles!: UserRole[];
+
+    @OneToMany(() => Review, (review) => review.user)
+    reviews!: Review[];
+
+    @OneToMany(() => ReviewReply, (reply) => reply.user)
+    reviewReplies!: ReviewReply[];
+
+    @Column({ type: "varchar", length: 255, nullable: true })
+    resetPasswordToken!: string | null;
+
+    @Column({ type: "timestamp", nullable: true })
+    resetPasswordExpires!: Date | null;
 }

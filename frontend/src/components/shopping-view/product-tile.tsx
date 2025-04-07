@@ -2,15 +2,16 @@ import { ProductResponse } from "@/config/entity";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { useNavigate } from "react-router-dom";
 
 
-const ShoppingProductTile = ({ product, handleAddToCart }: { product: ProductResponse, handleAddToCart: (getCurrentProductId: number, getTotalStock: number, unitPrice: number) => void }) => {
+const ShoppingProductTile = ({ handleGetProductDetails, product, handleAddToCart, className }: { handleGetProductDetails: (id: number) => void, product: ProductResponse, handleAddToCart: (getCurrentProductId: number, getTotalStock: number, unitPrice: number) => void, className: string }) => {
     const getBestDiscountedPrice = (product: ProductResponse) => {
         if (!product.promotions || product.promotions.length === 0) {
             return {
                 bestPrice: parseFloat(String(product.price)),
                 bestDiscountType: null,
-                discountAmount: 0 // Đặt mặc định là 0 để tránh lỗi undefined
+                discountAmount: 0 
             };
         }
 
@@ -23,7 +24,7 @@ const ShoppingProductTile = ({ product, handleAddToCart }: { product: ProductRes
                 } else if (promo.discountType === "fixed") {
                     discountedPrice = product.price - parseFloat(String(promo.discountAmount));
                 } else {
-                    return best; // Bỏ qua nếu không phải kiểu giảm giá hợp lệ
+                    return best; 
                 }
 
                 return discountedPrice < best.bestPrice
@@ -33,15 +34,16 @@ const ShoppingProductTile = ({ product, handleAddToCart }: { product: ProductRes
             {
                 bestPrice: parseFloat(String(product.price)),
                 bestDiscountType: null,
-                discountAmount: 0 // Đảm bảo discountAmount tồn tại trong mọi trường hợp
+                discountAmount: 0 
             }
         );
     };
     const { bestPrice, bestDiscountType, discountAmount } = getBestDiscountedPrice(product);
+    const navigate = useNavigate();
     return (
-        <div>
+        <div className={className}>
             <Card className="w-full max-w-sm mx-auto flex flex-col justify-between">
-                <div className="flex flex-col">
+                <div className="flex flex-col" onClick={() => handleGetProductDetails(product?.id)}>
                     <div className="relative">
                         <img src={product.image} alt={product.name} className="w-full h-[300px] object-cover rounded-t-lg" />
                         {
@@ -78,6 +80,7 @@ const ShoppingProductTile = ({ product, handleAddToCart }: { product: ProductRes
                 <CardFooter>
                     <Button 
                         className="w-full mr-2"
+                        onClick={() => navigate(`/shopping/product/${product?.id}`)}
                     >
                         View Details
                     </Button>
